@@ -18,12 +18,22 @@ var foldertoggle #links to the reuse folder button
 var lastoutputfolder = "none" #tracks last output folder, this can in future be used to replace global.outfile but i cba right now
 var uiscale = 1.0 #tracks scaling for retina screens
 var use_anyway #used to store the folder selected for cdprogs when it appears the wrong folder is selected but the user wants to use it anyway
+var ui_scale_setting := 1.0 # user UI scale preference
 
 
 #scripts
 var open_help
 var run_thread
 var save_load
+
+# add a key binding (with optional ctrl/meta modifiers)
+func _add_key(action: String, scancode: int, ctrl: bool=false, meta: bool=false) -> void:
+	var ev := InputEventKey.new()
+	ev.physical_keycode = scancode
+	ev.pressed = true
+	ev.ctrl_pressed = ctrl
+	ev.meta_pressed = meta
+	InputMap.action_add_event(action, ev)
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -55,6 +65,8 @@ func _ready() -> void:
 	make_signal_connections()
 	check_user_preferences()
 	hidpi_adjustment()
+	ensure_zoom_actions()
+	apply_user_ui_scale()
 	new_patch()
 	load_from_filesystem()
 	check_cdp_location_set()
@@ -89,8 +101,58 @@ func hidpi_adjustment():
 		get_window().content_scale_factor = uiscale
 		#goes through popup_windows group and scales all popups and resizes them
 		for window in get_tree().get_nodes_in_group("popup_windows"):
-			window.size = window.size * uiscale
+			# store a base size so repeated adjustments are idempotent
+			if not window.has_meta("base_size"):
+				window.set_meta("base_size", window.size)
+			var base = window.get_meta("base_size")
+			window.size = base * uiscale
 			window.content_scale_factor = uiscale
+
+func apply_user_ui_scale():
+	# Apply saved UI scale combined with hidpi scaling
+	var _interface_settings = ConfigHandler.load_interface_settings()
+	if _interface_settings.has("ui_scale"):
+		ui_scale_setting = float(_interface_settings.get("ui_scale"))
+	else:
+		ui_scale_setting = 1.0
+	# combined scale
+	var final_scale = uiscale * ui_scale_setting
+	get_window().content_scale_factor = final_scale
+	# scale popup windows to match final scale
+	for window in get_tree().get_nodes_in_group("popup_windows"):
+		if not window.has_meta("base_size"):
+			window.set_meta("base_size", window.size)
+		var base = window.get_meta("base_size")
+		window.size = base * final_scale
+		window.content_scale_factor = final_scale
+
+
+func ensure_zoom_actions() -> void:
+	# Ensure zoom input actions exist
+	if not InputMap.has_action("zoom_in"):
+		InputMap.add_action("zoom_in")
+	if not InputMap.has_action("zoom_out"):
+		InputMap.add_action("zoom_out")
+	if not InputMap.has_action("zoom_reset"):
+		InputMap.add_action("zoom_reset")
+
+	# add common combinations (Ctrl or Cmd +/-, Ctrl/Cmd 0)
+	_add_key("zoom_in", KEY_PLUS, true, false)
+	_add_key("zoom_in", KEY_EQUAL, true, false)
+	_add_key("zoom_in", KEY_PLUS, false, true)
+	_add_key("zoom_in", KEY_EQUAL, false, true)
+	_add_key("zoom_out", KEY_MINUS, true, false)
+	_add_key("zoom_out", KEY_MINUS, false, true)
+	_add_key("zoom_reset", KEY_0, true, false)
+	_add_key("zoom_reset", KEY_0, false, true)
+
+func save_user_ui_scale(scale_val: float) -> void:
+	# hide transient tooltips/windows then save/apply new scale
+	simulate_mouse_click()
+
+	ui_scale_setting = clamp(scale_val, 0.5, 4.0)
+	ConfigHandler.save_interface_settings("ui_scale", ui_scale_setting)
+	apply_user_ui_scale()
 
 func load_from_filesystem():
 	#checks if user has opened a file from the system file menu and loads it
@@ -267,6 +329,12 @@ func _input(event):
 		_on_graph_edit_popup_request(pos)
 	elif event.is_action_pressed("run_thread"):
 		_run_process()
+	elif event.is_action_pressed("zoom_in"):
+		save_user_ui_scale(ui_scale_setting + 0.1)
+	elif event.is_action_pressed("zoom_out"):
+		save_user_ui_scale(ui_scale_setting - 0.1)
+	elif event.is_action_pressed("zoom_reset"):
+		save_user_ui_scale(1.0)
 	elif event.is_action_pressed("new"):
 		if changesmade == true:
 			savestate = "newfile"
