@@ -7,3 +7,6 @@ splash.xcf
 cdprogs/windows/
 cdprogs/mac/
 cdprogs/linux/
+
+# macos
+.DS_Store
