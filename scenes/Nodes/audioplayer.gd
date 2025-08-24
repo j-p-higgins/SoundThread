@@ -4,6 +4,7 @@ extends Control
 @onready var file_dialog = $FileDialog
 @onready var waveform_display = $WaveformPreview
 var outfile_path = "not_loaded"
+var temp_dir = "user://temp_soundthread"
 
 var rect_focus = false
 var mouse_pos_x
@@ -75,7 +76,13 @@ func _on_file_selected(path: String):
 		setnodetitle.emit(path.get_file())
 	else:
 		$EndLabel.text = "00:00.00"
-	set_meta("inputfile", path)
+	# If the selected filename contains non-ASCII bytes, copy it once to a safe
+	# temporary location (absolute filesystem path) and store that path instead.
+	var final_path = path
+	if typeof(path) == TYPE_STRING and FileAccess.file_exists(path) and contains_non_ascii(path):
+		final_path = copy_file_to_temp(path)
+		print("Copied input to temporary path: " + final_path)
+	set_meta("inputfile", final_path)
 	reset_playback()
 	
 	#output signal that the input has loaded and it is safe to continue with running thread
@@ -242,3 +249,40 @@ func convert_length(reportedseconds: float) -> String:
 		converted_length = "%02.0f:%05.2f" % [minutes, seconds]
 	
 	return converted_length
+
+
+func contains_non_ascii(s: String) -> bool:
+	# quick check for bytes outside 0-127 using UTF-8 bytes
+	var buf = s.to_utf8_buffer()
+	for i in range(buf.size()):
+		if buf[i] > 127:
+			return true
+	return false
+
+
+func ensure_temp_dir() -> void:
+	var da = DirAccess.open("user://")
+	if da:
+		if not da.dir_exists("temp_soundthread"):
+			da.make_dir_recursive("temp_soundthread")
+
+
+func copy_file_to_temp(src_path: String) -> String:
+	if not FileAccess.file_exists(src_path):
+		return src_path
+	ensure_temp_dir()
+	var basename = src_path.get_file()
+	var uniq = str(randi())
+	var dest = temp_dir + "/safe_" + uniq + "_" + basename
+	var abs_dest = ProjectSettings.globalize_path(dest)
+	var src = FileAccess.open(src_path, FileAccess.READ)
+	if src == null:
+		return src_path
+	var data = src.get_buffer(src.get_length())
+	src.close()
+	var dst = FileAccess.open(abs_dest, FileAccess.WRITE)
+	if dst == null:
+		return src_path
+	dst.store_buffer(data)
+	dst.close()
+	return abs_dest
