@@ -823,12 +823,11 @@ func get_soundfile_properties(file: String) -> Dictionary:
 		return soundfile_properties #no fmt chunk found, invalid wav file
 		
 	return soundfile_properties
-
+	
 func get_analysis_file_properties(file: String) -> Dictionary:
 	var analysis_file_properties:= {
-		"windowsize": 0,
+		"analysisbins": 0,
 		"windowcount": 0,
-		"decimationfactor": 0
 	}
 	
 	#open the audio file
@@ -848,28 +847,28 @@ func get_analysis_file_properties(file: String) -> Dictionary:
 		var chunk_id = f.get_buffer(4).get_string_from_ascii() 
 		#read how big this chunk is
 		var chunk_size = f.get_32()
+		if chunk_id == "fmt ":
+			# Move past standard WAVEFORMATEXTENSIBLE fields up to PVOCEX part
+			# (0x16 bytes standard fmt + 0x2A bytes extension = 64 bytes total before PVOC data)
+			f.seek(f.get_position() + 48)
+
+			# Now inside the 32-byte PVOCDATA structure:
+			var wWordFormat = f.get_16()
+			var wAnalFormat = f.get_16()
+			var wSourceFormat = f.get_16()
+			var wWindowType = f.get_16()
+			var nAnalysisBins = f.get_32()
+			analysis_file_properties["analysisbins"] = nAnalysisBins
+			var dwWinlen = f.get_32()
+			var dwOverlap = f.get_32()
+			var dwFrameAlign = f.get_32()
+			var fAnalysisRate = f.get_float()
+			var fWindowParam = f.get_float()
+
+			print("nAnalysisBins: ", nAnalysisBins)
+			print("Window length: ", dwWinlen)
+			print("Overlap: ", dwOverlap)
 		
-		if chunk_id == "LIST":
-			f.seek(f.get_position() + 4) # skip first four bits of data - list type "adtl"
-			var list_end = f.get_position() + chunk_size
-			while f.get_position() <= list_end:
-				var sub_chunk_id = f.get_buffer(4).get_string_from_ascii() 
-				var sub_chunk_size = f.get_32()
-				
-				if sub_chunk_id == "note":
-					var note_bytes = f.get_buffer(sub_chunk_size)
-					var note_text = ""
-					for b in note_bytes:
-						note_text += char(b)
-					var pvoc_header_data = note_text.split("\n", false)
-					var i = 0
-					for entry in pvoc_header_data:
-						if entry == "analwinlen":
-							analysis_file_properties["windowsize"] = hex_string_to_int_le(pvoc_header_data[i+1])
-						elif entry == "decfactor":
-							analysis_file_properties["decimationfactor"] =  hex_string_to_int_le(pvoc_header_data[i+1])
-						i += 1
-					break
 			#check if we have already found the data chunk (not likely) and break the loop
 			if data_chunk_size > 0:
 				f.close()
@@ -878,7 +877,7 @@ func get_analysis_file_properties(file: String) -> Dictionary:
 			#this is where the audio is stored
 			data_chunk_size = chunk_size
 			#check if we have already found the sfif chunk and break loop
-			if analysis_file_properties["windowsize"] > 0:
+			if analysis_file_properties["analysisbins"] > 0:
 				f.close()
 				break
 			#skip the rest of the chunk
@@ -891,15 +890,90 @@ func get_analysis_file_properties(file: String) -> Dictionary:
 	f.close()
 	
 	
-	if analysis_file_properties["windowsize"] != 0 and data_chunk_size != 0:
-		var floats_per_window = analysis_file_properties["windowsize"] + 2
-		var total_floats = data_chunk_size / 4
-		analysis_file_properties["windowcount"] = int(total_floats / floats_per_window)
+	if analysis_file_properties["analysisbins"] != 0 and data_chunk_size != 0:
+		analysis_file_properties["windowcount"] = int(data_chunk_size / (analysis_file_properties["analysisbins"] * 8))
 	else:
 		log_console("Error: Could not get information from analysis file", true)
 		
 	print(analysis_file_properties)
 	return analysis_file_properties
+	
+#func get_analysis_file_properties(file: String) -> Dictionary:
+	#var analysis_file_properties:= {
+		#"windowsize": 0,
+		#"windowcount": 0,
+		#"decimationfactor": 0
+	#}
+	#
+	##open the audio file
+	#var f = FileAccess.open(file, FileAccess.READ)
+	#if f == null:
+		#log_console("Could not find file: " + file, true)
+		#return analysis_file_properties  # couldn't open
+	#
+	##Skip the RIFF header (12 bytes: "RIFF", file size, "WAVE")
+	#f.seek(12)
+	#
+	#var data_chunk_size = 0
+	#
+	##read through file until end of file if needed
+	#while f.get_position() + 8 <= f.get_length():
+		##read the 4 byte chunk id to identify what this chunk is
+		#var chunk_id = f.get_buffer(4).get_string_from_ascii() 
+		##read how big this chunk is
+		#var chunk_size = f.get_32()
+		#
+		#if chunk_id == "LIST":
+			#f.seek(f.get_position() + 4) # skip first four bits of data - list type "adtl"
+			#var list_end = f.get_position() + chunk_size
+			#while f.get_position() <= list_end:
+				#var sub_chunk_id = f.get_buffer(4).get_string_from_ascii() 
+				#var sub_chunk_size = f.get_32()
+				#
+				#if sub_chunk_id == "note":
+					#var note_bytes = f.get_buffer(sub_chunk_size)
+					#var note_text = ""
+					#for b in note_bytes:
+						#note_text += char(b)
+					#var pvoc_header_data = note_text.split("\n", false)
+					#var i = 0
+					#for entry in pvoc_header_data:
+						#if entry == "analwinlen":
+							#analysis_file_properties["windowsize"] = hex_string_to_int_le(pvoc_header_data[i+1])
+						#elif entry == "decfactor":
+							#analysis_file_properties["decimationfactor"] =  hex_string_to_int_le(pvoc_header_data[i+1])
+						#i += 1
+					#break
+			##check if we have already found the data chunk (not likely) and break the loop
+			#if data_chunk_size > 0:
+				#f.close()
+				#break
+		#elif chunk_id == "data":
+			##this is where the audio is stored
+			#data_chunk_size = chunk_size
+			##check if we have already found the sfif chunk and break loop
+			#if analysis_file_properties["windowsize"] > 0:
+				#f.close()
+				#break
+			##skip the rest of the chunk
+			#f.seek(f.get_position() + chunk_size)
+		#else:
+			##don't care about any other data in the file skip it
+			#f.seek(f.get_position() + chunk_size)
+			#
+	##close the file
+	#f.close()
+	#
+	#
+	#if analysis_file_properties["windowsize"] != 0 and data_chunk_size != 0:
+		#var floats_per_window = analysis_file_properties["windowsize"] + 2
+		#var total_floats = data_chunk_size / 4
+		#analysis_file_properties["windowcount"] = int(total_floats / floats_per_window)
+	#else:
+		#log_console("Error: Could not get information from analysis file", true)
+		#
+	#print(analysis_file_properties)
+	#return analysis_file_properties
 	
 func hex_string_to_int_le(hex_string: String) -> int:
 	# Ensure the string is 8 characters (4 bytes)
@@ -1066,10 +1140,12 @@ func match_pvoc_channels(dict: Dictionary) -> void:
 			
 func _get_slider_values_ordered(node: Node) -> Array:
 	var results := []
-	if node.has_meta("command") and node.get_meta("command") == "pvocex2_-A":
-		results.append(["slider", "-N", fft_size, false, [], 2, 16380, false, false])
-		results.append(["slider", "-W", fft_overlap, false, [], 1, 4, false, false])
-		return results
+	#if node.has_meta("command") and node.get_meta("command") == "pvocex2_-A":
+		##results.append(["slider", "-W", int(fft_overlap), false, [], 1, 4, false, false])
+		##results.append(["slider", "-N", int(fft_size), false, [], 2, 16380, false, false])
+		#results.append(["slider", "-W", 2, false, [], 1, 4, false, false])
+		#results.append(["slider", "-N", 2, false, [], 2, 16380, false, false])
+		#return results
 	for child in node.get_children():
 		if child is Range:
 			var flag = child.get_meta("flag") if child.has_meta("flag") else ""
@@ -1157,6 +1233,14 @@ func make_process(node: Node, process_count: int, current_infile: Array, slider_
 		#build actual glide command
 		command = "%s/%s" %[control_script.cdpprogs_location, "morph"]
 		args = ["glide", window1_outfile, window2_outfile, output_file, duration]
+		
+	#special case for pvocex analyse as arguments have to go before files
+	elif node.get_meta("command") == "pvocex2_-A":
+		command = "%s/%s" %[control_script.cdpprogs_location, "pvocex2"]
+		args = ["-A", "-W" + str(fft_overlap), "-N" + str(fft_size)]
+		for file in current_infile:
+			args.append(file)
+		args.append(output_file)
 	else:
 		# Normal node process as usual 
 		# Get the command name from metadata
