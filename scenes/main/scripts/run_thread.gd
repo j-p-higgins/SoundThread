@@ -477,7 +477,7 @@ func run_thread_with_branches():
 			else: 
 				#Process outputs audio
 				#check if this is the last pvoc process in a stereo processing chain and check if infile is an array meaning that the last pvoc process was run in dual mono mode
-				if node.get_meta("command") == "pvoc_synth" and is_pvoc_stereo(current_infiles):
+				if node.get_meta("command") == "pvocex2_-S" and is_pvoc_stereo(current_infiles):
 					var split_files = await process_dual_mono_pvoc(current_infiles, node, process_count, slider_data)
 					var pvoc_stereo_files = split_files[0]
 								
@@ -890,13 +890,11 @@ func get_analysis_file_properties(file: String) -> Dictionary:
 	#close the file
 	f.close()
 	
-	#calculate actual window size from the decimation factor
-	
-	analysis_file_properties["windowsize"] = analysis_file_properties["windowsize"] * 128 / analysis_file_properties["decimationfactor"]
 	
 	if analysis_file_properties["windowsize"] != 0 and data_chunk_size != 0:
-		var bytes_per_frame = (analysis_file_properties["windowsize"] + 2) * 4
-		analysis_file_properties["windowcount"] = int(data_chunk_size / bytes_per_frame)
+		var floats_per_window = analysis_file_properties["windowsize"] + 2
+		var total_floats = data_chunk_size / 4
+		analysis_file_properties["windowcount"] = int(total_floats / floats_per_window)
 	else:
 		log_console("Error: Could not get information from analysis file", true)
 		
@@ -1068,9 +1066,9 @@ func match_pvoc_channels(dict: Dictionary) -> void:
 			
 func _get_slider_values_ordered(node: Node) -> Array:
 	var results := []
-	if node.has_meta("command") and node.get_meta("command") == "pvoc_anal_1":
-		results.append(["slider", "-c", fft_size, false, [], 2, 16380, false, false])
-		results.append(["slider", "-o", fft_overlap, false, [], 1, 4, false, false])
+	if node.has_meta("command") and node.get_meta("command") == "pvocex2_-A":
+		results.append(["slider", "-N", fft_size, false, [], 2, 16380, false, false])
+		results.append(["slider", "-W", fft_overlap, false, [], 1, 4, false, false])
 		return results
 	for child in node.get_children():
 		if child is Range:
@@ -1119,8 +1117,8 @@ func make_process(node: Node, process_count: int, current_infile: Array, slider_
 	var command
 	var cleanup = []
 	
-	# Determine output extension: .wav or .ana based on the node's slot type
-	var extension = ".wav" if node.get_slot_type_right(0) == 0 else ".ana"
+	# Determine output extension: .wav or .pvx based on the node's slot type
+	var extension = ".wav" if node.get_slot_type_right(0) == 0 else ".pvx"
 
 	# Construct output filename for this step
 	var output_file = "%s_%d%s" % [Global.outfile.get_basename(), process_count, extension]

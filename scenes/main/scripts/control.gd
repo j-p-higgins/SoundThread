@@ -867,16 +867,13 @@ func on_files_dropped(files):
 
 func _on_fft_size_item_selected(index: int) -> void:
 	var fft_size
-	if index == 13:
-		fft_size = 16380
-	else:
-		fft_size = 1 << (index + 1)
+	fft_size = 1 << (index + 1)
 	run_thread.fft_size = fft_size
 
 
 
 func _on_fft_overlap_item_selected(index: int) -> void:
-	run_thread.fft_overlap = index + 1
+	run_thread.fft_overlap = index
 
 
 func _on_undo_button_button_down() -> void:

@@ -5337,7 +5337,7 @@
 	"subcategory": "combine",
 	"title": "Sum"
   },
-  "pvoc_anal_1": {
+  "pvocex2_-A": {
 	"category": "pvoc",
 	"description": "This is process is used to analyse a sound and convert it from the time domain to the frequency domain. This allows for processes in the PVOC processes menu to be used to manipulate the sound. Once you are done processing in the frequency domain you can convert it back to audio again using Resynthesise. See Help > Tutorials > PVOC for more.\n",
 	"inputtype": "[0]",
@@ -5349,7 +5349,7 @@
 	"subcategory": "convert",
 	"title": "Analyse"
   },
-  "pvoc_synth": {
+  "pvocex2_-S": {
 	"category": "pvoc",
 	"description": "This is process is used to take the analysis of a sound file and resynthesise it back into the time domain. This should be used after you are done processing in the frequency domain to convert back to audio. See Help > Tutorials > PVOC for more. \n",
 	"inputtype": "[1]",

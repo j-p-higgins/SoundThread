@@ -608,7 +608,7 @@ offset_top = 45.0
 offset_right = 549.0
 offset_bottom = 72.0
 tooltip_text = "Adjusts the number of analysis points used by the frequency domain processes in this thread. More points give better frequency resolution but worse time resolution."
-item_count = 14
+item_count = 16
 popup/item_0/text = "2"
 popup/item_0/id = 0
 popup/item_1/text = "4"
@@ -635,8 +635,12 @@ popup/item_11/text = "4096"
 popup/item_11/id = 11
 popup/item_12/text = "8192"
 popup/item_12/id = 12
-popup/item_13/text = "16380"
+popup/item_13/text = "16384"
 popup/item_13/id = 13
+popup/item_14/text = "32768"
+popup/item_14/id = 14
+popup/item_15/text = "65536"
+popup/item_15/id = 15
 
 [node name="FFTOverlapLabel" type="Label" parent="."]
 layout_mode = 0
@@ -654,13 +658,13 @@ offset_right = 747.0
 offset_bottom = 72.0
 tooltip_text = "Adjusts the number of analysis points used by the frequency domain processes in this thread. More points give better frequency resolution but worse time resolution."
 item_count = 4
-popup/item_0/text = "1"
+popup/item_0/text = "0"
 popup/item_0/id = 0
-popup/item_1/text = "2"
+popup/item_1/text = "1"
 popup/item_1/id = 1
-popup/item_2/text = "3"
+popup/item_2/text = "2"
 popup/item_2/id = 2
-popup/item_3/text = "4"
+popup/item_3/text = "3"
 popup/item_3/id = 3
 
 [connection signal="connection_request" from="GraphEdit" to="GraphEdit" method="_on_connection_request"]
