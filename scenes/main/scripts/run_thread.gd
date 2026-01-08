@@ -405,8 +405,10 @@ func run_thread_with_branches():
 					
 				process_count += 1
 				
-		#elif node.has_meta("bypassed") and node.get_meta("bypassed"):
+		elif node.has_meta("bypassed") and node.get_meta("bypassed"):
 			#check if node is bypassed and skip processing
+			output_files[node_name] = current_infiles.values()[0]
+			process_count += 1
 			
 		else:
 			# Build the command for the current node's audio processing
