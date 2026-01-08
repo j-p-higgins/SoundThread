@@ -33,12 +33,13 @@ func _ready() -> void:
 	btn.connect("pressed", Callable(self, "_open_help")) #pass key (process name) when button is pressed
 	titlebar.add_child(btn)
 	
-	#add bypass
-	var bypass_btn = Button.new()
-	bypass_btn.text = "⏻"
-	bypass_btn.tooltip_text = "Bypass node from thread processing"
-	bypass_btn.pressed.connect(_bypass_node)
-	titlebar.add_child(bypass_btn)
+	if has_meta("allow_bypass") and get_meta("allow_bypass"):
+		#add bypass
+		var bypass_btn = Button.new()
+		bypass_btn.text = "⏻"
+		bypass_btn.tooltip_text = "Bypass node from thread processing"
+		bypass_btn.pressed.connect(_bypass_node)
+		titlebar.add_child(bypass_btn)
 	
 	await get_tree().process_frame
 	#reset_size()
