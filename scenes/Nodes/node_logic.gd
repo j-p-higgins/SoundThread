@@ -32,6 +32,14 @@ func _ready() -> void:
 	btn.tooltip_text = "Open help for " + self.title
 	btn.connect("pressed", Callable(self, "_open_help")) #pass key (process name) when button is pressed
 	titlebar.add_child(btn)
+	
+	#add bypass
+	var bypass_btn = Button.new()
+	bypass_btn.text = "⏻"
+	bypass_btn.tooltip_text = "Bypass node from thread processing"
+	bypass_btn.pressed.connect(_bypass_node)
+	titlebar.add_child(bypass_btn)
+	
 	await get_tree().process_frame
 	#reset_size()
 	
@@ -178,3 +186,11 @@ func set_button_value(value, button) -> void:
 		button.set_pressed_no_signal(value)
 		
 	button_states[button] = value
+
+func _bypass_node() -> void:
+	if has_meta("bypassed") and get_meta("bypassed"):
+		set_meta("bypassed", false)
+		self.modulate = Color(1.0, 1.0, 1.0)
+	else:
+		set_meta("bypassed", true)
+		self.modulate = Color(1.0, 1.0, 1.0, 0.5)

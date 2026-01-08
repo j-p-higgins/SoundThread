@@ -404,6 +404,10 @@ func run_thread_with_branches():
 					intermediate_files.append(output_file)
 					
 				process_count += 1
+				
+		#elif node.has_meta("bypassed") and node.get_meta("bypassed"):
+			#check if node is bypassed and skip processing
+			
 		else:
 			# Build the command for the current node's audio processing
 			var slider_data = _get_slider_values_ordered(node)
