@@ -16,6 +16,7 @@ var selected_cables:= [] #used to track which cables are selected for changing c
 var theme_background #used to track if the theme has changed and if so change the cable selection colour
 var theme_custom_background
 var high_contrast_cables
+var vertical_hotzone = 30
 
 
 # Called when the node enters the scene tree for the first time.
@@ -850,3 +851,15 @@ func node_position_changed(from: Vector2, to: Vector2, node: Node) -> void:
 
 func move_node(node: Node, to: Vector2) -> void:
 	node.position_offset = to
+
+func _is_in_input_hotzone(in_node: Object, in_port: int, mouse_position: Vector2) -> bool:
+	var port_size = Vector2(get_theme_constant("port_hotzone_inner_extent"), vertical_hotzone * 2)
+	var port_pos = in_node.get_position() + in_node.get_input_port_position(in_port) - port_size / 2
+	var rect = Rect2(port_pos, port_size)
+	return rect.has_point(mouse_position)
+
+func _is_in_output_hotzone(in_node: Object, in_port: int, mouse_position: Vector2) -> bool:
+	var port_size = Vector2(get_theme_constant("port_hotzone_outer_extent"), vertical_hotzone * 2)
+	var port_pos = in_node.get_position() + in_node.get_output_port_position(in_port) - port_size / 2
+	var rect = Rect2(port_pos, port_size)
+	return rect.has_point(mouse_position)
