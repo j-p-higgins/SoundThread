@@ -668,6 +668,7 @@ popup/item_3/text = "4"
 popup/item_3/id = 3
 
 [connection signal="connection_request" from="GraphEdit" to="GraphEdit" method="_on_connection_request"]
+[connection signal="connection_to_empty" from="GraphEdit" to="GraphEdit" method="_on_connection_to_empty"]
 [connection signal="copy_nodes_request" from="GraphEdit" to="GraphEdit" method="_on_copy_nodes_request"]
 [connection signal="cut_nodes_request" from="GraphEdit" to="GraphEdit" method="_on_cut_nodes_request"]
 [connection signal="delete_nodes_request" from="GraphEdit" to="GraphEdit" method="_on_graph_edit_delete_nodes_request"]

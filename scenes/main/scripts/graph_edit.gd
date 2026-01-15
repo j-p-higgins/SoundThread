@@ -438,6 +438,17 @@ func _on_cut_nodes_request() -> void:
 	force_hide_tooltips()
 	control_script.changesmade = true
 
+func _on_connection_to_empty(from_node: StringName, from_port: int, release_position: Vector2) -> void:
+	control_script.effect_position = release_position
+	control_script._on_graph_edit_popup_request(release_position)
+	
+	var from_graph_node = get_node_or_null(NodePath(from_node))
+	if from_graph_node and is_instance_valid(from_graph_node):
+		var search_menu = get_tree().current_scene.get_node("SearchMenu")
+		if search_menu:
+			search_menu.connect_to_node = true
+			search_menu.node_to_connect_to = from_graph_node
+
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_BACKSPACE:
