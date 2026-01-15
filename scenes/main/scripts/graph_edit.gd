@@ -454,6 +454,15 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if event.keycode == KEY_BACKSPACE:
 			_on_graph_edit_delete_nodes_request(PackedStringArray(selected_nodes.keys().filter(func(k): return selected_nodes[k])))
 			pass
+		elif event.keycode == KEY_F1 or (event.ctrl_pressed and (event.keycode == KEY_H or event.keycode == KEY_SLASH)):
+			_open_help_for_selected_nodes()
+			get_viewport().set_input_as_handled()
+
+func _open_help_for_selected_nodes() -> void:
+	for node in selected_nodes:
+		if selected_nodes[node] and node is GraphNode and is_instance_valid(node) and node.has_meta("command"):
+			open_help.call(node.get_meta("command"), node.title)
+			break
 
 func _on_graph_edit_delete_nodes_request(nodes: Array[StringName]) -> void:
 	if nodes.size() == 0:

@@ -14,6 +14,7 @@
 		"Reset Slider to Default": "Double click",
 		"Delete Node": "Backspace or Delete",
 		"Dissolve Node": "Ctrl + X",
+		"Open Help for Selected Node": "F1 or Ctrl + H or Ctrl + /",
 		"Undo": "Ctrl + Z",
 		"Redo": "Ctrl + Y",
 		"Copy": "Ctrl + C",
