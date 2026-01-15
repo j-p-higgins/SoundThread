@@ -399,6 +399,45 @@ func _on_graph_edit_node_selected(node: Node) -> void:
 func _on_graph_edit_node_deselected(node: Node) -> void:
 	selected_nodes[node] = false
 
+func _on_cut_nodes_request() -> void:
+	if selected_nodes.size() == 0:
+		return
+	
+	control_script.undo_redo.create_action("Dissolve Nodes")
+	
+	for node in selected_nodes:
+		if selected_nodes[node] and node is GraphNode and is_instance_valid(node):
+			if node.get_meta("command") == "outputfile":
+				continue
+			
+			var node_connections = []
+			var incoming_connections = []
+			var outgoing_connections = []
+			
+			for conn in get_connection_list():
+				if conn.to_node == node.name:
+					node_connections.append(conn)
+					incoming_connections.append(conn)
+				elif conn.from_node == node.name:
+					node_connections.append(conn)
+					outgoing_connections.append(conn)
+			
+			control_script.undo_redo.add_do_method(delete_node.bind(node))
+			control_script.undo_redo.add_undo_method(restore_node.bind(node))
+			control_script.undo_redo.add_undo_reference(node)
+			control_script.undo_redo.add_undo_method(restore_connections.bind(node_connections.duplicate(true)))
+			
+			for in_conn in incoming_connections:
+				for out_conn in outgoing_connections:
+					if _same_port_type(in_conn.from_node, in_conn.from_port, out_conn.to_node, out_conn.to_port):
+						control_script.undo_redo.add_do_method(connect_node.bind(in_conn.from_node, in_conn.from_port, out_conn.to_node, out_conn.to_port))
+						control_script.undo_redo.add_undo_method(disconnect_node.bind(in_conn.from_node, in_conn.from_port, out_conn.to_node, out_conn.to_port))
+	
+	selected_nodes = {}
+	control_script.undo_redo.commit_action()
+	force_hide_tooltips()
+	control_script.changesmade = true
+
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_BACKSPACE:
