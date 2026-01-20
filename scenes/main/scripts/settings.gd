@@ -16,6 +16,12 @@ func _ready() -> void:
 	pass
 
 
+func _input(event: InputEvent) -> void:
+	if visible and event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		hide()
+		get_viewport().set_input_as_handled()
+
+
 func _on_change_cdp_button_down() -> void:
 	self.hide()
 	open_cdp_location.emit()

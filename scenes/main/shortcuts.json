@@ -3,7 +3,8 @@
 		"Run Thread": "Ctrl + R",
 		"New Thread": "Ctrl + N",
 		"Save Thread": "Ctrl + S",
-		"Save Thread As": "Ctrl + Shift + S"
+		"Save Thread As": "Ctrl + Shift + S",
+		"Quit": "Ctrl + Q"
 	},
 	"Building a Thread":{
 		"Add Node (Open Search)": "Right click empty space or Ctrl + F",
@@ -21,5 +22,8 @@
 	"Navigating a Thread":{
 		"Zoom": "Mouse wheel",
 		"Move": "Middle click + drag or Ctrl + Mouse wheel"
+	},
+	"Dialogs":{
+		"Close Settings/Audio Settings": "Escape"
 	}
 }

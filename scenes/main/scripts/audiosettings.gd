@@ -21,6 +21,14 @@ func _on_about_to_popup() -> void:
 
 func _on_close_requested() -> void:
 	device_timer.stop()
+	hide()
+
+
+func _input(event: InputEvent) -> void:
+	if visible and event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		device_timer.stop()
+		hide()
+		get_viewport().set_input_as_handled()
 
 
 func update_device_list():
