@@ -54,6 +54,7 @@ func _make_node(command: String, skip_undo_redo := false) -> GraphNode:
 			#var effect: GraphNode = Nodes.get_node(NodePath(command)).duplicate()
 			var effect = Utilities.nodes[command].instantiate()
 			effect.name = command
+			effect.set_meta("allow_bypass", false) #set a meta to block any bypass attempts on utils
 			#add node and register it for undo redo
 			control_script.undo_redo.create_action("Add Node")
 			control_script.undo_redo.add_do_method(add_child.bind(effect, true))
@@ -88,6 +89,7 @@ func _make_node(command: String, skip_undo_redo := false) -> GraphNode:
 			#get node properties
 			var stereo = node_info.get("stereo", false)
 			var outputisstereo = node_info.get("outputisstereo", false) #used to identify the few processes that always output in stereo making the thread need to be stereo
+			var allowbypass = node_info.get("allowbypass", false)
 			var inputs = JSON.parse_string(node_info.get("inputtype", ""))
 			var outputs = JSON.parse_string(node_info.get("outputtype", ""))
 			var portcount = max(inputs.size(), outputs.size())
@@ -99,6 +101,7 @@ func _make_node(command: String, skip_undo_redo := false) -> GraphNode:
 			graphnode.set_meta("command", command)
 			graphnode.set_meta("stereo_input", stereo)
 			graphnode.set_meta("output_is_stereo", outputisstereo)
+			graphnode.set_meta("allow_bypass", allowbypass)
 			if inputs.size() == 0 and outputs.size() > 0:
 				graphnode.set_meta("input", true)
 			else:

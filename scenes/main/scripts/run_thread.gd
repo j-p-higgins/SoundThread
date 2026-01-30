@@ -68,7 +68,7 @@ func run_thread_with_branches():
 	var is_valid = path_exists_through_all_nodes()
 	if is_valid == false:
 		log_console("[color=#9c2828][b]Error: Valid Thread not found[/b][/color]", true)
-		log_console("Threads must contain at least one processing node and a valid path from the Input File or Synthesis node to the Output File.", true)
+		log_console("Threads must contain at least one non-bypassed processing node and a valid path from the Input File or Synthesis node to the Output File.", true)
 		await get_tree().process_frame  # Let UI update
 		if progress_window.visible:
 			progress_window.hide()
@@ -404,6 +404,31 @@ func run_thread_with_branches():
 					intermediate_files.append(output_file)
 					
 				process_count += 1
+				
+		elif node.has_meta("bypassed") and node.get_meta("bypassed"):
+			
+			var bypassed_inputs = current_infiles.values()
+			
+			#check if node is bypassed and skip processing
+			if node.get_slot_type_right(0) == 0:
+				if bypassed_inputs.size() > 1:
+					var runmerge = await merge_many_files(0, process_count, bypassed_inputs) #dummy inlet idx used as not needed
+					var merge_output = runmerge[0] #mixed output file name
+					var converted_files = runmerge[1] #intermediate files created from merge
+					
+					output_files[node_name] = merge_output
+					
+					#add intermediate files to delete list if toggled
+					if control_script.delete_intermediate_outputs:
+						intermediate_files.append(merge_output)
+						for f in converted_files:
+							intermediate_files.append(f)
+				else:
+					output_files[node_name] = bypassed_inputs[0]
+			else:
+				output_files[node_name] = bypassed_inputs[0]
+			process_count += 1
+			
 		else:
 			# Build the command for the current node's audio processing
 			var slider_data = _get_slider_values_ordered(node)
@@ -1350,7 +1375,8 @@ func path_exists_through_all_nodes() -> bool:
 			if current == output_node_name:
 				# Candidate path found; validate multi-inlets
 				if validate_path_inlets(path, graph, input_node_names):
-					return true  # fully valid path found
+					if validate_bypass(path):
+						return true  # fully valid path found
 
 			for neighbor in graph.get(current, []):
 				if neighbor in path:
@@ -1398,6 +1424,19 @@ func path_has_input(current: String, graph: Dictionary, input_node_names: Array,
 			var src_node = str(conn["from_node"])
 			if path_has_input(src_node, graph, input_node_names, visited.duplicate()):
 				return true
+	return false
+
+func validate_bypass(path: Array) -> bool:
+	for node in path:
+		print(node)
+		var child = graph_edit.get_node(node)
+		print(child)
+		if child.get_meta("command") == "inputfile" or child.get_meta("command") == "outputfile":
+			continue
+		if child.has_meta("bypassed") and child.get_meta("bypassed"):
+			continue
+		else:
+			return true
 	return false
 
 #func path_exists_through_all_nodes() -> bool:

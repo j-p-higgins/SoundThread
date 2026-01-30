@@ -88,6 +88,7 @@ func edit_node(key: String):
 		$HBoxContainer/VBoxContainer2/HBoxContainer8/outputisstereo.button_pressed = bool(info.get("outputisstereo"))
 		$HBoxContainer/VBoxContainer2/HBoxContainer9/inputtype.text = str(info.get("inputtype", ""))
 		$HBoxContainer/VBoxContainer2/HBoxContainer11/outputtype.text = str(info.get("outputtype", ""))
+		$HBoxContainer/VBoxContainer2/HBoxContainer10/allowbypass.button_pressed = bool(info.get("allowbypass"))
 		
 		for child in parameter_container.get_children():
 			child.queue_free()
@@ -208,6 +209,7 @@ func save_node(is_new: bool) -> void:
 		"outputisstereo": $HBoxContainer/VBoxContainer2/HBoxContainer8/outputisstereo.button_pressed,
 		"inputtype": $HBoxContainer/VBoxContainer2/HBoxContainer9/inputtype.text,
 		"outputtype": $HBoxContainer/VBoxContainer2/HBoxContainer11/outputtype.text,
+		"allowbypass": $HBoxContainer/VBoxContainer2/HBoxContainer10/allowbypass.button_pressed,
 		"parameters": {}
 	}
 
