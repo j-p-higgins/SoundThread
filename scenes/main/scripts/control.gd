@@ -634,10 +634,10 @@ func _on_rich_text_label_meta_clicked(meta: Variant) -> void:
 
 
 func _on_graph_edit_popup_request(at_position: Vector2) -> void:
-
-	effect_position = graph_edit.get_local_mouse_position()
+ 
+	effect_position = at_position
 	
-	#give the search menu the ui scale
+	#give search menu ui scale
 	$SearchMenu.uiscale = uiscale
 
 	#get the mouse position in screen coordinates

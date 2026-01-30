@@ -16,6 +16,7 @@ var selected_cables:= [] #used to track which cables are selected for changing c
 var theme_background #used to track if the theme has changed and if so change the cable selection colour
 var theme_custom_background
 var high_contrast_cables
+var vertical_hotzone = 30
 
 
 # Called when the node enters the scene tree for the first time.
@@ -401,11 +402,70 @@ func _on_graph_edit_node_selected(node: Node) -> void:
 func _on_graph_edit_node_deselected(node: Node) -> void:
 	selected_nodes[node] = false
 
+func _on_cut_nodes_request() -> void:
+	if selected_nodes.size() == 0:
+		return
+	
+	control_script.undo_redo.create_action("Dissolve Nodes")
+	
+	for node in selected_nodes:
+		if selected_nodes[node] and node is GraphNode and is_instance_valid(node):
+			if node.get_meta("command") == "outputfile":
+				continue
+			
+			var node_connections = []
+			var incoming_connections = []
+			var outgoing_connections = []
+			
+			for conn in get_connection_list():
+				if conn.to_node == node.name:
+					node_connections.append(conn)
+					incoming_connections.append(conn)
+				elif conn.from_node == node.name:
+					node_connections.append(conn)
+					outgoing_connections.append(conn)
+			
+			control_script.undo_redo.add_do_method(delete_node.bind(node))
+			control_script.undo_redo.add_undo_method(restore_node.bind(node))
+			control_script.undo_redo.add_undo_reference(node)
+			control_script.undo_redo.add_undo_method(restore_connections.bind(node_connections.duplicate(true)))
+			
+			for in_conn in incoming_connections:
+				for out_conn in outgoing_connections:
+					if _same_port_type(in_conn.from_node, in_conn.from_port, out_conn.to_node, out_conn.to_port):
+						control_script.undo_redo.add_do_method(connect_node.bind(in_conn.from_node, in_conn.from_port, out_conn.to_node, out_conn.to_port))
+						control_script.undo_redo.add_undo_method(disconnect_node.bind(in_conn.from_node, in_conn.from_port, out_conn.to_node, out_conn.to_port))
+	
+	selected_nodes = {}
+	control_script.undo_redo.commit_action()
+	force_hide_tooltips()
+	control_script.changesmade = true
+
+func _on_connection_to_empty(from_node: StringName, from_port: int, release_position: Vector2) -> void:
+	control_script.effect_position = release_position
+	control_script._on_graph_edit_popup_request(release_position)
+	
+	var from_graph_node = get_node_or_null(NodePath(from_node))
+	if from_graph_node and is_instance_valid(from_graph_node):
+		var search_menu = get_tree().current_scene.get_node("SearchMenu")
+		if search_menu:
+			search_menu.connect_to_node = true
+			search_menu.node_to_connect_to = from_graph_node
+
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_BACKSPACE:
 			_on_graph_edit_delete_nodes_request(PackedStringArray(selected_nodes.keys().filter(func(k): return selected_nodes[k])))
 			pass
+		elif event.keycode == KEY_F1 or (event.ctrl_pressed and (event.keycode == KEY_H or event.keycode == KEY_SLASH)):
+			_open_help_for_selected_nodes()
+			get_viewport().set_input_as_handled()
+
+func _open_help_for_selected_nodes() -> void:
+	for node in selected_nodes:
+		if selected_nodes[node] and node is GraphNode and is_instance_valid(node) and node.has_meta("command"):
+			open_help.call(node.get_meta("command"), node.title)
+			break
 
 func _on_graph_edit_delete_nodes_request(nodes: Array[StringName]) -> void:
 	if nodes.size() == 0:
@@ -853,3 +913,15 @@ func node_position_changed(from: Vector2, to: Vector2, node: Node) -> void:
 
 func move_node(node: Node, to: Vector2) -> void:
 	node.position_offset = to
+
+func _is_in_input_hotzone(in_node: Object, in_port: int, mouse_position: Vector2) -> bool:
+	var port_size = Vector2(get_theme_constant("port_hotzone_inner_extent"), vertical_hotzone * 2)
+	var port_pos = in_node.get_position() + in_node.get_input_port_position(in_port) - port_size / 2
+	var rect = Rect2(port_pos, port_size)
+	return rect.has_point(mouse_position)
+
+func _is_in_output_hotzone(in_node: Object, in_port: int, mouse_position: Vector2) -> bool:
+	var port_size = Vector2(get_theme_constant("port_hotzone_outer_extent"), vertical_hotzone * 2)
+	var port_pos = in_node.get_position() + in_node.get_output_port_position(in_port) - port_size / 2
+	var rect = Rect2(port_pos, port_size)
+	return rect.has_point(mouse_position)
