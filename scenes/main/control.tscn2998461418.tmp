@@ -1,0 +1,716 @@
+[gd_scene load_steps=15 format=3 uid="uid://bcs87y7ptx3ke"]
+
+[ext_resource type="Script" uid="uid://bdlfvuljckmu1" path="res://scenes/main/scripts/control.gd" id="1_2f0aq"]
+[ext_resource type="Script" uid="uid://l2yejnjysupr" path="res://scenes/main/scripts/graph_edit.gd" id="2_3ioqo"]
+[ext_resource type="Texture2D" uid="uid://drn34trxhf80f" path="res://theme/images/open_explore.png" id="3_4na11"]
+[ext_resource type="PackedScene" uid="uid://b0wdj8v6o0wq0" path="res://scenes/menu/menu.tscn" id="3_dtf4o"]
+[ext_resource type="Texture2D" uid="uid://cdwux1smquvpi" path="res://theme/images/logo.png" id="4_3ioqo"]
+[ext_resource type="Texture2D" uid="uid://cjdlu2gooh81h" path="res://theme/images/undo.png" id="4_c1dxk"]
+[ext_resource type="Script" uid="uid://c503vew41pw80" path="res://scenes/main/scripts/color_rect_theme_invert.gd" id="4_mg8al"]
+[ext_resource type="PackedScene" uid="uid://dta7rfalv4uvd" path="res://scenes/main/audio_settings.tscn" id="5_dtf4o"]
+[ext_resource type="Script" uid="uid://cyhaucukdha8a" path="res://scenes/main/scripts/console.gd" id="5_fbaj0"]
+[ext_resource type="Script" uid="uid://wja0lo4nobh1" path="res://scenes/main/scripts/about_menu.gd" id="5_yf4wl"]
+[ext_resource type="Texture2D" uid="uid://bj7u7rhbxvsrq" path="res://theme/images/redo.png" id="5_yxbua"]
+[ext_resource type="Script" uid="uid://dlcbmyu3s2phc" path="res://scenes/menu/search_menu.gd" id="6_fyarh"]
+[ext_resource type="Script" uid="uid://b6r7k326k3vif" path="res://scenes/Nodes/check_for_updates.gd" id="7_1kc3g"]
+[ext_resource type="PackedScene" uid="uid://c1a6elrpk4eks" path="res://scenes/main/settings.tscn" id="8_16l5g"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_2f0aq")
+
+[node name="GraphEdit" type="GraphEdit" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 32.0
+right_disconnects = true
+script = ExtResource("2_3ioqo")
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 0
+offset_left = 301.0
+offset_top = 44.0
+offset_right = 325.0
+offset_bottom = 71.0
+tooltip_text = "Explore available processes (Ctrl/Cmd + E)"
+icon = ExtResource("3_4na11")
+
+[node name="UndoButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 329.0
+offset_top = 44.0
+offset_right = 353.0
+offset_bottom = 71.0
+tooltip_text = "Undo (ctrl/cmd + z)"
+icon = ExtResource("4_c1dxk")
+
+[node name="RedoButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 357.0
+offset_top = 44.0
+offset_right = 381.0
+offset_bottom = 71.0
+tooltip_text = "Redo (ctrl/cmd + y)"
+icon = ExtResource("5_yxbua")
+
+[node name="FileDialog" type="FileDialog" parent="."]
+title = "Open a Directory"
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[node name="mainmenu" parent="." groups=["popup_windows"] instance=ExtResource("3_dtf4o")]
+visible = false
+
+[node name="NoLocationPopup" type="Window" parent="." groups=["popup_windows"]]
+auto_translate_mode = 1
+title = "Wrong File Type"
+initial_position = 2
+size = Vector2i(450, 500)
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+borderless = true
+popup_window = true
+
+[node name="ColorRect" type="ColorRect" parent="NoLocationPopup" groups=["invertable_background"]]
+offset_right = 459.0
+offset_bottom = 514.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="TextureRect" type="TextureRect" parent="NoLocationPopup"]
+offset_left = -6.0
+offset_top = 16.0
+offset_right = 378.0
+offset_bottom = 64.0
+texture = ExtResource("4_3ioqo")
+expand_mode = 2
+stretch_mode = 4
+
+[node name="RichTextLabel" type="RichTextLabel" parent="NoLocationPopup"]
+offset_left = 16.0
+offset_top = 73.0
+offset_right = 435.0
+offset_bottom = 457.0
+bbcode_enabled = true
+text = "Welcome to SoundThread! 
+
+SoundThread is an interface for the Composers Desktop Project (CDP) audio processing tools. As such it requires you to have CDP installed to work correctly. If you don't already have CDP installed you can [url=\"https://www.unstablesound.net/cdp.html\"]download it here.[/url]
+
+When you close this window you will be prompted for the location of your _cdprogs folder. The default location for this folder is:
+Windows: C:\\cdpr8\\_cdp\\_cdprogs
+Mac: ~/cdpr8/_cdp/_cdprogs
+
+SoundThread will remember this but you can always change it later in Settings.
+
+If this is your first time using SoundThread you can find some getting started tutorials in the Help tab in the top menu."
+scroll_active = false
+
+[node name="OkButton" type="Button" parent="NoLocationPopup"]
+offset_left = -7.0
+offset_top = 469.0
+offset_right = 457.0
+offset_bottom = 500.0
+text = "Click to locate _cdprogs"
+
+[node name="NoInputPopup" type="Window" parent="." groups=["popup_windows"]]
+auto_translate_mode = 1
+title = "No Input Selected"
+initial_position = 2
+size = Vector2i(380, 140)
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+borderless = true
+popup_window = true
+
+[node name="ColorRect" type="ColorRect" parent="NoInputPopup" groups=["invertable_background"]]
+offset_right = 506.0
+offset_bottom = 421.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="Label" type="Label" parent="NoInputPopup"]
+offset_left = 14.0
+offset_top = 7.0
+offset_right = 363.0
+offset_bottom = 100.0
+text = "No input file selected
+
+Please load a sound file into Input File node
+Supported file type: .wav, mono or stereo"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="OkButton2" type="Button" parent="NoInputPopup"]
+offset_left = -10.0
+offset_top = 110.0
+offset_right = 390.0
+offset_bottom = 141.0
+text = "Ok"
+
+[node name="WrongFolderPopup" type="Window" parent="." groups=["popup_windows"]]
+auto_translate_mode = 1
+title = "No Input Selected"
+initial_position = 2
+size = Vector2i(380, 250)
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+borderless = true
+popup_window = true
+
+[node name="ColorRect" type="ColorRect" parent="WrongFolderPopup" groups=["invertable_background"]]
+offset_right = 506.0
+offset_bottom = 421.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="Label" type="Label" parent="WrongFolderPopup"]
+offset_left = 14.0
+offset_top = 13.0
+offset_right = 363.0
+offset_bottom = 208.0
+text = "The selected folder does not appear to contain the required CDP Programs. 
+
+Please ensure you have selected the folder located at \"CDPR8/_cdp/_cdprogs\". 
+
+If you are confident that you have selected the correct folder select \"Use Anyway\"."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="SelectFolderButton" type="Button" parent="WrongFolderPopup"]
+offset_left = -2.0
+offset_top = 221.0
+offset_right = 190.0
+offset_bottom = 252.0
+text = "Select New Folder"
+
+[node name="UseAnywayButton" type="Button" parent="WrongFolderPopup"]
+offset_left = 190.0
+offset_top = 221.0
+offset_right = 382.0
+offset_bottom = 252.0
+text = "Use Anyway"
+
+[node name="AudioDevicePopup" type="Window" parent="." groups=["popup_windows"]]
+auto_translate_mode = 1
+title = "Audio Device Not Available"
+initial_position = 2
+size = Vector2i(380, 140)
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+popup_window = true
+
+[node name="ColorRect" type="ColorRect" parent="AudioDevicePopup" groups=["invertable_background"]]
+offset_right = 506.0
+offset_bottom = 421.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="Label" type="Label" parent="AudioDevicePopup"]
+offset_left = 14.0
+offset_top = 7.0
+offset_right = 363.0
+offset_bottom = 100.0
+text = "The last selected audio output device is not available. SoundThread is using the system default."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="OpenAudioSettings" type="Button" parent="AudioDevicePopup"]
+offset_left = -2.0
+offset_top = 110.0
+offset_right = 382.0
+offset_bottom = 141.0
+text = "Open Audio Settings"
+
+[node name="MultipleConnectionsPopup" type="Window" parent="." groups=["popup_windows"]]
+auto_translate_mode = 1
+title = "No Input Selected"
+initial_position = 2
+size = Vector2i(380, 160)
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+borderless = true
+popup_window = true
+
+[node name="ColorRect" type="ColorRect" parent="MultipleConnectionsPopup" groups=["invertable_background"]]
+offset_right = 506.0
+offset_bottom = 421.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="Label" type="Label" parent="MultipleConnectionsPopup"]
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 363.0
+offset_bottom = 117.0
+text = "PVOC Nodes can only have one input.
+
+To mix sounds created in the frequency domain convert them to the time domain using PVOC: Resynthesise first."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="OkButton3" type="Button" parent="MultipleConnectionsPopup"]
+offset_left = -10.0
+offset_top = 128.0
+offset_right = 389.0
+offset_bottom = 159.0
+text = "Ok"
+
+[node name="CdpLocationDialog" type="FileDialog" parent="."]
+title = "Open a Directory"
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[node name="Console" type="Window" parent="." groups=["popup_windows"]]
+title = "Generating Output"
+initial_position = 5
+size = Vector2i(600, 400)
+visible = false
+unresizable = true
+always_on_top = true
+script = ExtResource("5_fbaj0")
+
+[node name="Panel" type="Panel" parent="Console"]
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 590.0
+offset_bottom = 344.0
+
+[node name="ConsoleOutput" type="RichTextLabel" parent="Console"]
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 588.0
+offset_bottom = 344.0
+focus_mode = 2
+selection_enabled = true
+
+[node name="ConsoleOpenFolder" type="Button" parent="Console"]
+offset_left = 308.0
+offset_top = 352.0
+offset_right = 588.0
+offset_bottom = 393.0
+text = "Open Output Folder"
+
+[node name="KillProcess" type="Button" parent="Console"]
+offset_left = 12.0
+offset_top = 352.0
+offset_right = 292.0
+offset_bottom = 393.0
+disabled = true
+text = "Stop Running Thread"
+
+[node name="ConsoleRightClick" type="PopupMenu" parent="Console"]
+item_count = 2
+item_0/text = "Select All"
+item_0/id = 0
+item_1/text = "Copy"
+item_1/id = 1
+
+[node name="MenuBarBackground" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 35.0
+grow_horizontal = 2
+color = Color(0.93408, 0.93408, 0.93408, 1)
+
+[node name="MenuBar" type="MenuBar" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = -8.0
+offset_bottom = 35.0
+grow_horizontal = 2
+flat = true
+prefer_global_menu = false
+
+[node name="FileButton" type="PopupMenu" parent="MenuBar"]
+title = "File"
+item_count = 4
+item_0/text = "New Thread"
+item_0/id = 2
+item_1/text = "Save Thread"
+item_1/id = 3
+item_2/text = "Save Thread As"
+item_2/id = 0
+item_3/text = "Load Thread"
+item_3/id = 1
+
+[node name="SettingsButton" type="PopupMenu" parent="MenuBar"]
+title = "Settings"
+item_count = 3
+item_0/text = "SoundThread Settings"
+item_0/id = 0
+item_1/text = "Audio Settings"
+item_1/id = 1
+item_2/text = "Open the Console"
+item_2/id = 2
+
+[node name="HelpButton" type="PopupMenu" parent="MenuBar"]
+auto_translate_mode = 1
+title = "Help"
+item_count = 17
+item_0/text = "Tutorials"
+item_0/id = 0
+item_0/separator = true
+item_1/text = "Getting Started"
+item_1/id = 1
+item_2/text = "Navigating SoundThread"
+item_2/id = 2
+item_3/text = "Building a Thread"
+item_3/id = 3
+item_4/text = "Frequency Domain"
+item_4/id = 4
+item_5/text = "Automation"
+item_5/id = 5
+item_6/text = "Trimming Input Files"
+item_6/id = 6
+item_7/text = "Multiple Inputs"
+item_7/id = 13
+item_8/text = "Preview Nodes"
+item_8/id = 14
+item_9/text = "Randomising Parameters"
+item_9/id = 16
+item_10/text = "Tips"
+item_10/id = 7
+item_10/separator = true
+item_11/text = "Wet/Dry Mix"
+item_11/id = 8
+item_12/text = "Resonant Filters"
+item_12/id = 12
+item_13/text = "Other Help"
+item_13/id = 9
+item_13/separator = true
+item_14/text = "Keyboard/Mouse Shortcuts"
+item_14/id = 15
+item_15/text = "CDP Documentation"
+item_15/id = 10
+item_16/text = "Report a Bug"
+item_16/id = 11
+
+[node name="About" type="PopupMenu" parent="MenuBar"]
+item_count = 1
+item_0/id = 0
+item_0/disabled = true
+script = ExtResource("5_yf4wl")
+
+[node name="SaveDialog" type="FileDialog" parent="."]
+use_native_dialog = true
+
+[node name="LoadDialog" type="FileDialog" parent="."]
+auto_translate_mode = 1
+use_native_dialog = true
+
+[node name="SaveChangesPopup" type="Window" parent="." groups=["popup_windows"]]
+auto_translate_mode = 1
+title = "No Input Selected"
+initial_position = 2
+size = Vector2i(351, 100)
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+borderless = true
+popup_window = true
+
+[node name="ColorRect" type="ColorRect" parent="SaveChangesPopup" groups=["invertable_background"]]
+offset_right = 369.0
+offset_bottom = 114.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="Label" type="Label" parent="SaveChangesPopup"]
+offset_left = -1.0
+offset_top = 21.0
+offset_right = 348.0
+offset_bottom = 52.0
+text = "Save changes to this thread?"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="SaveChanges" type="Button" parent="SaveChangesPopup"]
+offset_top = 70.0
+offset_right = 117.0
+offset_bottom = 100.0
+text = "Save"
+
+[node name="DontSaveChanges" type="Button" parent="SaveChangesPopup"]
+offset_left = 117.0
+offset_top = 70.0
+offset_right = 234.0
+offset_bottom = 100.0
+text = "Don't Save"
+
+[node name="CancelChanges" type="Button" parent="SaveChangesPopup"]
+offset_left = 234.0
+offset_top = 70.0
+offset_right = 351.0
+offset_bottom = 100.0
+text = "Cancel"
+
+[node name="AudioSettings" parent="." groups=["popup_windows"] instance=ExtResource("5_dtf4o")]
+visible = false
+
+[node name="SearchMenu" type="PopupPanel" parent="." groups=["popup_windows"]]
+auto_translate_mode = 1
+position = Vector2i(100, 100)
+size = Vector2i(600, 77)
+script = ExtResource("6_fyarh")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SearchMenu"]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 596.0
+offset_bottom = 73.0
+
+[node name="ReplaceLabel" type="Label" parent="SearchMenu/VBoxContainer"]
+layout_mode = 2
+text = "Replace"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="SearchBar" type="LineEdit" parent="SearchMenu/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "Type to search"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="SearchMenu/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 0
+
+[node name="ItemContainer" type="VBoxContainer" parent="SearchMenu/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CheckForUpdates" type="HTTPRequest" parent="."]
+script = ExtResource("7_1kc3g")
+
+[node name="UpdatePopup" type="Window" parent="CheckForUpdates" groups=["popup_windows"]]
+auto_translate_mode = 1
+title = "New Update Available"
+initial_position = 2
+size = Vector2i(379, 300)
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+popup_window = true
+
+[node name="ColorRect" type="ColorRect" parent="CheckForUpdates/UpdatePopup" groups=["invertable_background"]]
+offset_right = 398.0
+offset_bottom = 313.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="Label" type="Label" parent="CheckForUpdates/UpdatePopup"]
+offset_left = 14.0
+offset_top = 6.0
+offset_right = 366.0
+offset_bottom = 63.0
+text = "A new version of SoundThread (0.0.0) is available to download."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="OpenAudioSettings" type="Button" parent="CheckForUpdates/UpdatePopup"]
+offset_left = -2.0
+offset_top = 270.0
+offset_right = 382.0
+offset_bottom = 301.0
+text = "Get the update"
+
+[node name="UpdateNotes" type="RichTextLabel" parent="CheckForUpdates/UpdatePopup"]
+offset_left = 6.0
+offset_top = 62.0
+offset_right = 374.0
+offset_bottom = 262.0
+bbcode_enabled = true
+text = "Update details:"
+
+[node name="Settings" parent="." groups=["popup_windows"] instance=ExtResource("8_16l5g")]
+visible = false
+
+[node name="ProgressWindow" type="Window" parent="." groups=["popup_windows"]]
+initial_position = 2
+size = Vector2i(600, 110)
+visible = false
+transient = true
+exclusive = true
+borderless = true
+
+[node name="ColorRect" type="ColorRect" parent="ProgressWindow" groups=["invertable_background"]]
+offset_right = 613.0
+offset_bottom = 121.0
+color = Color(0.101961, 0.101961, 0.101961, 0.6)
+script = ExtResource("4_mg8al")
+
+[node name="ProgressBar" type="ProgressBar" parent="ProgressWindow"]
+offset_left = 10.0
+offset_top = 11.0
+offset_right = 590.0
+offset_bottom = 51.0
+show_percentage = false
+
+[node name="ProgressLabel" type="Label" parent="ProgressWindow"]
+offset_left = 10.0
+offset_top = 11.0
+offset_right = 590.0
+offset_bottom = 51.0
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="KillProcess2" type="Button" parent="ProgressWindow"]
+offset_left = 8.0
+offset_top = 59.0
+offset_right = 592.0
+offset_bottom = 100.0
+text = "Stop Running Thread"
+
+[node name="FFTSizeLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 393.0
+offset_top = 48.0
+offset_right = 465.0
+offset_bottom = 67.0
+text = "FFT Size:"
+
+[node name="FFTSize" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 470.0
+offset_top = 45.0
+offset_right = 549.0
+offset_bottom = 72.0
+tooltip_text = "Adjusts the number of analysis points used by the frequency domain processes in this thread. More points give better frequency resolution but worse time resolution."
+item_count = 14
+popup/item_0/text = "2"
+popup/item_0/id = 0
+popup/item_1/text = "4"
+popup/item_1/id = 1
+popup/item_2/text = "8"
+popup/item_2/id = 2
+popup/item_3/text = "16"
+popup/item_3/id = 3
+popup/item_4/text = "32"
+popup/item_4/id = 4
+popup/item_5/text = "64"
+popup/item_5/id = 5
+popup/item_6/text = "128"
+popup/item_6/id = 6
+popup/item_7/text = "256"
+popup/item_7/id = 7
+popup/item_8/text = "512"
+popup/item_8/id = 8
+popup/item_9/text = "1024"
+popup/item_9/id = 9
+popup/item_10/text = "2048"
+popup/item_10/id = 10
+popup/item_11/text = "4096"
+popup/item_11/id = 11
+popup/item_12/text = "8192"
+popup/item_12/id = 12
+popup/item_13/text = "16380"
+popup/item_13/id = 13
+
+[node name="FFTOverlapLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 562.0
+offset_top = 48.0
+offset_right = 662.0
+offset_bottom = 67.0
+text = "FFT Overlap:"
+
+[node name="FFTOverlap" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 668.0
+offset_top = 45.0
+offset_right = 747.0
+offset_bottom = 72.0
+tooltip_text = "Adjusts the amount of overlap between fft windows. Higher overlap values will provide better resolution but take longer to process."
+item_count = 4
+popup/item_0/text = "1"
+popup/item_0/id = 0
+popup/item_1/text = "2"
+popup/item_1/id = 1
+popup/item_2/text = "3"
+popup/item_2/id = 2
+popup/item_3/text = "4"
+popup/item_3/id = 3
+
+[connection signal="connection_request" from="GraphEdit" to="GraphEdit" method="_on_connection_request"]
+[connection signal="copy_nodes_request" from="GraphEdit" to="GraphEdit" method="_on_copy_nodes_request"]
+[connection signal="delete_nodes_request" from="GraphEdit" to="GraphEdit" method="_on_graph_edit_delete_nodes_request"]
+[connection signal="disconnection_request" from="GraphEdit" to="GraphEdit" method="_on_graph_edit_disconnection_request"]
+[connection signal="gui_input" from="GraphEdit" to="GraphEdit" method="_on_gui_input"]
+[connection signal="node_deselected" from="GraphEdit" to="GraphEdit" method="_on_graph_edit_node_deselected"]
+[connection signal="node_selected" from="GraphEdit" to="GraphEdit" method="_on_graph_edit_node_selected"]
+[connection signal="paste_nodes_request" from="GraphEdit" to="GraphEdit" method="_on_paste_nodes_request"]
+[connection signal="popup_request" from="GraphEdit" to="." method="_on_graph_edit_popup_request"]
+[connection signal="button_down" from="Button" to="." method="open_explore"]
+[connection signal="button_down" from="UndoButton" to="." method="_on_undo_button_button_down"]
+[connection signal="button_down" from="RedoButton" to="." method="_on_redo_button_button_down"]
+[connection signal="dir_selected" from="FileDialog" to="." method="_on_file_dialog_dir_selected"]
+[connection signal="close_requested" from="mainmenu" to="." method="_on_mainmenu_close_requested"]
+[connection signal="meta_clicked" from="NoLocationPopup/RichTextLabel" to="." method="_on_rich_text_label_meta_clicked"]
+[connection signal="button_down" from="NoLocationPopup/OkButton" to="." method="_on_ok_button_button_down"]
+[connection signal="button_down" from="NoInputPopup/OkButton2" to="." method="_on_ok_button_2_button_down"]
+[connection signal="button_down" from="WrongFolderPopup/SelectFolderButton" to="." method="_on_select_folder_button_button_down"]
+[connection signal="button_down" from="WrongFolderPopup/UseAnywayButton" to="." method="_on_use_anyway_button_button_down"]
+[connection signal="close_requested" from="AudioDevicePopup" to="." method="_on_audio_device_popup_close_requested"]
+[connection signal="button_down" from="AudioDevicePopup/OpenAudioSettings" to="." method="_on_open_audio_settings_button_down"]
+[connection signal="button_down" from="MultipleConnectionsPopup/OkButton3" to="." method="_on_ok_button_3_button_down"]
+[connection signal="canceled" from="CdpLocationDialog" to="." method="_on_cdp_location_dialog_canceled"]
+[connection signal="dir_selected" from="CdpLocationDialog" to="." method="_on_cdp_location_dialog_dir_selected"]
+[connection signal="close_requested" from="Console" to="." method="_on_console_close_requested"]
+[connection signal="gui_input" from="Console/ConsoleOutput" to="Console" method="_on_console_output_gui_input"]
+[connection signal="button_down" from="Console/ConsoleOpenFolder" to="." method="_on_console_open_folder_button_down"]
+[connection signal="button_down" from="Console/KillProcess" to="." method="_on_kill_process_button_down"]
+[connection signal="index_pressed" from="Console/ConsoleRightClick" to="Console" method="_on_console_right_click_index_pressed"]
+[connection signal="index_pressed" from="MenuBar/FileButton" to="." method="_on_file_button_index_pressed"]
+[connection signal="index_pressed" from="MenuBar/SettingsButton" to="." method="_on_settings_button_index_pressed"]
+[connection signal="index_pressed" from="MenuBar/HelpButton" to="." method="_on_help_button_index_pressed"]
+[connection signal="file_selected" from="SaveDialog" to="." method="_on_save_dialog_file_selected"]
+[connection signal="file_selected" from="LoadDialog" to="." method="_on_load_dialog_file_selected"]
+[connection signal="button_down" from="SaveChangesPopup/SaveChanges" to="." method="_on_save_changes_button_down"]
+[connection signal="button_down" from="SaveChangesPopup/DontSaveChanges" to="." method="_on_dont_save_changes_button_down"]
+[connection signal="button_down" from="SaveChangesPopup/CancelChanges" to="." method="_on_cancel_changes_button_down"]
+[connection signal="close_requested" from="AudioSettings" to="." method="_on_audio_settings_close_requested"]
+[connection signal="about_to_popup" from="SearchMenu" to="SearchMenu" method="_on_about_to_popup"]
+[connection signal="editing_toggled" from="SearchMenu/VBoxContainer/SearchBar" to="SearchMenu" method="_on_search_bar_editing_toggled"]
+[connection signal="text_changed" from="SearchMenu/VBoxContainer/SearchBar" to="SearchMenu" method="_on_search_bar_text_changed"]
+[connection signal="text_submitted" from="SearchMenu/VBoxContainer/SearchBar" to="SearchMenu" method="_on_search_bar_text_submitted"]
+[connection signal="close_requested" from="CheckForUpdates/UpdatePopup" to="CheckForUpdates" method="_on_update_popup_close_requested"]
+[connection signal="button_down" from="CheckForUpdates/UpdatePopup/OpenAudioSettings" to="CheckForUpdates" method="_on_open_audio_settings_button_down"]
+[connection signal="button_down" from="ProgressWindow/KillProcess2" to="." method="_on_kill_process_button_down"]
+[connection signal="item_selected" from="FFTSize" to="." method="_on_fft_size_item_selected"]
+[connection signal="item_selected" from="FFTOverlap" to="." method="_on_fft_overlap_item_selected"]

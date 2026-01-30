@@ -406,8 +406,27 @@ func run_thread_with_branches():
 				process_count += 1
 				
 		elif node.has_meta("bypassed") and node.get_meta("bypassed"):
+			
+			var bypassed_inputs = current_infiles.values()
+			
 			#check if node is bypassed and skip processing
-			output_files[node_name] = current_infiles.values()[0]
+			if node.get_slot_type_right(0) == 0:
+				if bypassed_inputs.size() > 1:
+					var runmerge = await merge_many_files(0, process_count, bypassed_inputs) #dummy inlet idx used as not needed
+					var merge_output = runmerge[0] #mixed output file name
+					var converted_files = runmerge[1] #intermediate files created from merge
+					
+					output_files[node_name] = merge_output
+					
+					#add intermediate files to delete list if toggled
+					if control_script.delete_intermediate_outputs:
+						intermediate_files.append(merge_output)
+						for f in converted_files:
+							intermediate_files.append(f)
+				else:
+					output_files[node_name] = bypassed_inputs[0]
+			else:
+				output_files[node_name] = bypassed_inputs[0]
 			process_count += 1
 			
 		else:
