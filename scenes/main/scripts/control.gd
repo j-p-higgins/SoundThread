@@ -340,6 +340,10 @@ func _input(event):
 	elif event.is_action_pressed("save_as"):
 		savestate = "saveas"
 		$SaveDialog.popup_centered()
+		
+	elif event.is_action_pressed("quit"):
+		# same logic que le Window cliose button
+		get_tree().root.propagate_notification(NOTIFICATION_WM_CLOSE_REQUEST)
 	
 func simulate_mouse_click():
 	#simulates clicking the middle mouse button in order to hide any visible tooltips
