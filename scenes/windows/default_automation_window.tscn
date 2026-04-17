@@ -1,0 +1,33 @@
+[gd_scene load_steps=2 format=3 uid="uid://cl1n10pr77gii"]
+
+[ext_resource type="Script" uid="uid://cpkeju5o2ymso" path="res://scenes/windows/default_automation_window.gd" id="1_6moma"]
+
+[node name="Window" type="Window"]
+initial_position = 2
+size = Vector2i(700, 500)
+unresizable = true
+script = ExtResource("1_6moma")
+
+[node name="TabContainer" type="TabContainer" parent="."]
+offset_right = 700.0
+offset_bottom = 501.0
+current_tab = 0
+
+[node name="Visual Editor" type="VBoxContainer" parent="TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="Control" type="Control" parent="TabContainer/Visual Editor"]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="TabContainer/Visual Editor/Control"]
+offset_top = 8.0
+offset_right = 700.0
+offset_bottom = 308.0
+color = Color(0.0646965, 0.0646965, 0.0646965, 0.447059)
+
+[node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1

@@ -84,7 +84,9 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 	match index:
 		0:
 			$BreakFileMaker.position = DisplayServer.mouse_get_position()
-			$BreakFileMaker.show()
+			AutomationWindowHandler.automation_window_requested(self.get_instance_id(), self.get_parent().name)
+			
+			#$BreakFileMaker.show()
 			if $HSplitContainer/HSlider.has_meta("brk_data"):
 				$BreakFileMaker/AutomationEditor.read_automation($HSplitContainer/HSlider.get_meta("brk_data"))
 				
