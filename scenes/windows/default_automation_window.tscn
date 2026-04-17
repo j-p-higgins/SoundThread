@@ -22,12 +22,16 @@ custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 
 [node name="ColorRect" type="ColorRect" parent="TabContainer/Visual Editor/Control"]
-offset_top = 8.0
 offset_right = 700.0
-offset_bottom = 308.0
+offset_bottom = 300.0
 color = Color(0.0646965, 0.0646965, 0.0646965, 0.447059)
+
+[node name="Label" type="Label" parent="TabContainer/Visual Editor"]
+layout_mode = 2
 
 [node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
+
+[connection signal="close_requested" from="." to="." method="_on_close_requested"]

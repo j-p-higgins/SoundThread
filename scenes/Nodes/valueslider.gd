@@ -3,6 +3,8 @@ extends VBoxContainer
 @onready var window := $BreakFileMaker
 @onready var editor := window.get_node("AutomationEditor")
 @onready var slider = $HSplitContainer/HSlider
+@onready var label = $SliderLabel
+var slider_properties := {}
 var undo_redo: UndoRedo
 var previous_value
 signal meta_changed
@@ -16,6 +18,19 @@ func _ready() -> void:
 	editor.connect("automation_updated", Callable(self, "_on_automation_data_received"))
 	
 	previous_value = slider.value
+	
+	var node_title = self.get_parent().title
+	
+	slider_properties = {
+		"node_title" = node_title,
+		"parameter_name" = label.text,
+		"minimum_value" = slider.min_value, 
+		"maximum_value" = slider.max_value, 
+		"step_amount" = slider.step, 
+		"default_value" = slider.value, 
+		"exponential" = slider.exp_edit,
+		"brk_data" = null
+	}
 
 
 func _on_h_slider_value_changed(value: float) -> void:
@@ -84,11 +99,14 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 	match index:
 		0:
 			$BreakFileMaker.position = DisplayServer.mouse_get_position()
-			AutomationWindowHandler.automation_window_requested(self.get_instance_id(), self.get_parent().name)
+			if slider.has_meta("brk_data"):
+				#$BreakFileMaker/AutomationEditor.read_automation($HSplitContainer/HSlider.get_meta("brk_data"))
+				slider_properties.brk_data = slider.get_meta("brk_data", null)
+			
+			AutomationWindowHandler.automation_window_requested(self.get_instance_id(), self.get_parent().name, slider_properties)
 			
 			#$BreakFileMaker.show()
-			if $HSplitContainer/HSlider.has_meta("brk_data"):
-				$BreakFileMaker/AutomationEditor.read_automation($HSplitContainer/HSlider.get_meta("brk_data"))
+			
 				
 		1:
 			$HSplitContainer/HSlider.set_meta("brk_data", null)

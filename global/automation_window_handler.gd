@@ -7,9 +7,9 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 
-func automation_window_requested(slider_id: int, automation_parent_name: StringName) -> void:
+func automation_window_requested(slider_id: int, automation_parent_name: StringName, slider_properties: Dictionary) -> void:
 	if !is_automation_open(slider_id):
-		create_automation_window(slider_id, automation_parent_name)
+		create_automation_window(slider_id, automation_parent_name, slider_properties)
 
 func is_automation_open(slider_id: int) -> bool:
 	for child in get_tree().current_scene.get_children():
@@ -23,10 +23,18 @@ func is_automation_open(slider_id: int) -> bool:
 			return true
 	return false
 	
-func create_automation_window(slider_id: int, automation_parent_name: StringName) -> void:
+func create_automation_window(slider_id: int, automation_parent_name: StringName, slider_properties: Dictionary) -> void:
 	var automation_window = DefaultWindow.instantiate()
+	
 	automation_window.set_meta("automation_parent_name", automation_parent_name)
 	automation_window.set_meta("slider_id", slider_id)
+	
+	automation_window.title = slider_properties.node_title + " - " + slider_properties.parameter_name
+	
+	automation_window.min_y = slider_properties.minimum_value
+	automation_window.max_y = slider_properties.maximum_value
+	automation_window.exponential = slider_properties.exponential
+	
 	get_tree().current_scene.add_child(automation_window)
 	automation_window.popup()
 
