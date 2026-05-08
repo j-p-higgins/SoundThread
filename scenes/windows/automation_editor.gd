@@ -1,8 +1,8 @@
 extends Control
 class_name AutomationEditor
 
-const max_zoom = 5.0
-const zoom_per_scroll = 0.3
+const max_zoom = 10.0
+const zoom_per_scroll = 0.2
 const point_size = 10
 
 var zoom_factor = 1.0
@@ -25,7 +25,7 @@ func _gui_input(event):
 	if event is InputEventMouseButton:
 		# double-click: delete only if not fixed, otherwise add new
 		if event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
-			print("Double click")
+			add_remove_point(event.position)
 
 		# begin drag on press
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -66,21 +66,51 @@ func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	
 	queue_redraw()
 	
+func add_remove_point(mouse_position: Vector2) -> void:
+	var automation_value = convert_to_automation_value(mouse_position)
+	print(automation_value)
+
 func _draw():
 	var sorted = []
 	sorted = automation_points.duplicate()
 	sorted.sort_custom(sort_points)
-	#for i in range(automation_points.size() - 1):
-		#draw_dashed_line(sorted[i], sorted[i + 1], Color(0.1, 0.1, 0.1, 0.6), 2.0, 6.0, true, true)
+	
+	var screen_points = []
+	for point in sorted:
+		var screen_point = convert_to_screen_position(point)
+		
+		screen_points.append(screen_point)
+	
+	for i in range(automation_points.size() - 1):
+		var point_a = screen_points[i]
+		var point_b = screen_points[i + 1]
+		
+		if point_b.x < 0:
+			continue
+		
+		if point_a.x > size.x:
+			continue
+		
+		draw_dashed_line(point_a, point_b, Color(0.7, 0.7, 0.7, 0.6), 2.0, 6.0, true, true)
 	
 	var maximum_percent = (100 / zoom_factor) + zoomed_offset
 	
-	for point in automation_points:
-		if point.x >= zoomed_offset and point.x <= maximum_percent:
-			var point_x_pos = ((((point.x - zoomed_offset) * zoom_factor) / 100) * self.size.x) - (point_size / 2)
-			var point_y_pos = (self.size.y - (((point.y - min_y) / max_y) * self.size.y)) - (point_size / 2)
-			draw_rect(Rect2(point_x_pos, point_y_pos, point_size, point_size), Color(0.9, 0.9, 0.9, 0.8))
+	for point in screen_points:
+		if point.x >= 0 and point.x <= self.size.x:
+			draw_rect(Rect2(point.x - (point_size / 2), point.y  - (point_size / 2), point_size, point_size), Color(0.9, 0.9, 0.9, 0.8))
 
+func convert_to_screen_position(automation_point: Vector2) -> Vector2:
+	var point_x_pos = (((automation_point.x - zoomed_offset) * zoom_factor) / 100) * self.size.x
+	var point_y_pos = self.size.y - (((automation_point.y - min_y) / (max_y - min_y)) * self.size.y)
+	
+	return Vector2(point_x_pos, point_y_pos)
 
+func convert_to_automation_value(screen_position: Vector2) -> Vector2:
+	var point_x_value = ((100 / zoom_factor) * (screen_position.x / self.size.x)) + zoomed_offset
+	var point_y_value = (((self.size.y - screen_position.y) / self.size.y) * (max_y - min_y)) + min_y
+	
+	return Vector2(point_x_value, point_y_value)
+	
+	
 func sort_points(a, b):
 	return a.x < b.x
