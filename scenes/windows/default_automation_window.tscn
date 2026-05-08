@@ -1,33 +1,54 @@
-[gd_scene load_steps=2 format=3 uid="uid://cl1n10pr77gii"]
+[gd_scene load_steps=3 format=3 uid="uid://cl1n10pr77gii"]
 
 [ext_resource type="Script" uid="uid://cpkeju5o2ymso" path="res://scenes/windows/default_automation_window.gd" id="1_6moma"]
+[ext_resource type="Script" uid="uid://biey12ipsj6bp" path="res://scenes/windows/automation_editor.gd" id="2_7tbcr"]
 
 [node name="Window" type="Window"]
 initial_position = 2
 size = Vector2i(700, 500)
-unresizable = true
+min_size = Vector2i(700, 500)
 script = ExtResource("1_6moma")
 
 [node name="TabContainer" type="TabContainer" parent="."]
-offset_right = 700.0
-offset_bottom = 501.0
+custom_minimum_size = Vector2(700, 501)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 current_tab = 0
 
 [node name="Visual Editor" type="VBoxContainer" parent="TabContainer"]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="Control" type="Control" parent="TabContainer/Visual Editor"]
+[node name="PanelContainer" type="PanelContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AutomationEditor" type="Control" parent="TabContainer/Visual Editor/PanelContainer"]
 custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
+script = ExtResource("2_7tbcr")
 
-[node name="ColorRect" type="ColorRect" parent="TabContainer/Visual Editor/Control"]
+[node name="ColorRect" type="ColorRect" parent="TabContainer/Visual Editor/PanelContainer/AutomationEditor"]
+visible = false
+layout_mode = 0
 offset_right = 700.0
 offset_bottom = 300.0
-color = Color(0.0646965, 0.0646965, 0.0646965, 0.447059)
+color = Color(0.907942, 0.907942, 0.907942, 0.447059)
+
+[node name="HSlider" type="HSlider" parent="TabContainer/Visual Editor"]
+layout_mode = 2
 
 [node name="Label" type="Label" parent="TabContainer/Visual Editor"]
 layout_mode = 2
+
+[node name="TempPadding" type="MarginContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+theme_override_constants/margin_top = 100
 
 [node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
 visible = false
