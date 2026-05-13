@@ -103,7 +103,7 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 				#$BreakFileMaker/AutomationEditor.read_automation($HSplitContainer/HSlider.get_meta("brk_data"))
 				slider_properties.brk_data = slider.get_meta("brk_data", null)
 			
-			AutomationWindowHandler.automation_window_requested(self.get_instance_id(), self.get_parent().name, slider_properties)
+			AutomationWindowHandler.automation_window_requested(self.get_instance_id(), self.get_parent().name, slider_properties, slider.value)
 			
 			#$BreakFileMaker.show()
 			

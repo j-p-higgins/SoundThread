@@ -18,8 +18,6 @@ var automation_points = []
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	
-	#dummy automation for testing - DELETE
-	automation_points = [Vector2(0.0, 5), Vector2(10, 40), Vector2(20, 30), Vector2(30, 55), Vector2(40, 25), Vector2(50, 10), Vector2(60, 20), Vector2(70, 10), Vector2(80, 40), Vector2(90, 20), Vector2(100, 5)]
 
 func _gui_input(event):
 	if event is InputEventMouseButton:
@@ -30,6 +28,7 @@ func _gui_input(event):
 		# begin drag on press
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			print("Drag Started")
+			print(event.position)
 
 		# end drag on release
 		elif event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
@@ -68,7 +67,17 @@ func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	
 func add_remove_point(mouse_position: Vector2) -> void:
 	var automation_value = convert_to_automation_value(mouse_position)
-	print(automation_value)
+	var matching_point = get_point_at_pos(automation_value) 
+	
+	if matching_point != -1:
+		if automation_points[matching_point].x == 0 or automation_points[matching_point].x == 100:
+			pass
+		else:
+			automation_points.remove_at(matching_point)
+	else:
+		automation_points.append(automation_value)
+		
+	queue_redraw()
 
 func _draw():
 	var sorted = []
@@ -114,3 +123,16 @@ func convert_to_automation_value(screen_position: Vector2) -> Vector2:
 	
 func sort_points(a, b):
 	return a.x < b.x
+
+func get_point_at_pos(pos: Vector2) -> int:
+	var y_tolerance = (max_y - min_y) / (self.size.y * 0.25)
+	
+	var i = 0
+	for point in automation_points:
+		var x_difference = point.x - pos.x
+		if x_difference >= (-0.5 / zoom_factor) and x_difference <= (0.5 / zoom_factor):
+			var y_difference = point.y - pos.y
+			if y_difference >= (y_tolerance * -1) and y_difference <= y_tolerance:
+				return i
+		i += 1
+	return -1
