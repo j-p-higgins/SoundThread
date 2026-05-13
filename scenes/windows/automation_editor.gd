@@ -13,6 +13,7 @@ var max_y: float
 var exponential: bool
 
 var automation_points = []
+var selected_points = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -27,8 +28,20 @@ func _gui_input(event):
 
 		# begin drag on press
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			print("Drag Started")
-			print(event.position)
+			var automation_value = convert_to_automation_value(event.position)
+			var point_selected = get_point_at_pos(automation_value)
+			
+			if point_selected == -1:
+				selected_points.clear()
+				print("nothing selected")
+			else:
+				if !event.shift_pressed:
+					selected_points.clear()
+				selected_points.append(automation_points[point_selected])
+			
+			
+			print(selected_points)
+			queue_redraw()
 
 		# end drag on release
 		elif event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
@@ -45,6 +58,7 @@ func _gui_input(event):
 		# zoom out
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			zoom_automation(zoom_per_scroll * -1, event.position.x)
+			
 			
 func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	#convert mouse position to a (decimal) percentage of automation window size
@@ -90,6 +104,12 @@ func _draw():
 		
 		screen_points.append(screen_point)
 	
+	var selected_screen_points = []
+	for point in selected_points:
+		var screen_point = convert_to_screen_position(point)
+		
+		selected_screen_points.append(screen_point)
+	
 	for i in range(automation_points.size() - 1):
 		var point_a = screen_points[i]
 		var point_b = screen_points[i + 1]
@@ -100,13 +120,16 @@ func _draw():
 		if point_a.x > size.x:
 			continue
 		
-		draw_dashed_line(point_a, point_b, Color(0.7, 0.7, 0.7, 0.6), 2.0, 6.0, true, true)
+		draw_dashed_line(point_a, point_b, Color(0.7, 0.7, 0.7, 0.4), 2.0, 6.0, true, true)
 	
 	var maximum_percent = (100 / zoom_factor) + zoomed_offset
 	
 	for point in screen_points:
 		if point.x >= 0 and point.x <= self.size.x:
-			draw_rect(Rect2(point.x - (point_size / 2), point.y  - (point_size / 2), point_size, point_size), Color(0.9, 0.9, 0.9, 0.8))
+			if selected_screen_points.has(point):
+				draw_rect(Rect2(point.x - (point_size / 2), point.y  - (point_size / 2), point_size, point_size), Color(0.9, 0.9, 0.9, 1))
+			else:
+				draw_rect(Rect2(point.x - (point_size / 2), point.y  - (point_size / 2), point_size, point_size), Color(0.9, 0.9, 0.9, 0.5))
 
 func convert_to_screen_position(automation_point: Vector2) -> Vector2:
 	var point_x_pos = (((automation_point.x - zoomed_offset) * zoom_factor) / 100) * self.size.x
