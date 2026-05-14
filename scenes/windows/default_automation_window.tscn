@@ -40,6 +40,24 @@ offset_right = 700.0
 offset_bottom = 300.0
 color = Color(0.907942, 0.907942, 0.907942, 0.447059)
 
+[node name="EditorData" type="HBoxContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+alignment = 2
+
+[node name="XLabel" type="Label" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+text = "X:"
+
+[node name="XEdit" type="LineEdit" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+
+[node name="YLabel" type="Label" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+text = "Y:"
+
+[node name="YEdit" type="LineEdit" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+
 [node name="HSlider" type="HSlider" parent="TabContainer/Visual Editor"]
 layout_mode = 2
 
@@ -48,7 +66,7 @@ layout_mode = 2
 
 [node name="TempPadding" type="MarginContainer" parent="TabContainer/Visual Editor"]
 layout_mode = 2
-theme_override_constants/margin_top = 100
+theme_override_constants/margin_top = 80
 
 [node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
 visible = false
@@ -56,3 +74,7 @@ layout_mode = 2
 metadata/_tab_index = 1
 
 [connection signal="close_requested" from="." to="." method="_on_close_requested"]
+[connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_focus_exited"]
+[connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_text_submitted"]
+[connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_focus_exited"]
+[connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_text_submitted"]

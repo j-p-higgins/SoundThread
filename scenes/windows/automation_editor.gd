@@ -1,6 +1,9 @@
 extends Control
 class_name AutomationEditor
 
+@onready var value_edit_x = $"../../EditorData/XEdit"
+@onready var value_edit_y = $"../../EditorData/YEdit"
+
 const max_zoom = 10.0
 const zoom_per_scroll = 0.5
 const point_size = 10
@@ -55,17 +58,37 @@ func _gui_input(event):
 			zoom_automation(zoom_per_scroll * -1, event.position.x)
 			
 	elif event is InputEventMouseMotion:
+		var automation_value = convert_to_automation_value(event.position)
 		if mouse_down:
-			var automation_value = convert_to_automation_value(event.position)
 			selection_end = automation_value.x
 			
 			if selected_points.size() > 0:
 				var point_offset_amount = automation_value - mouse_down_value
 				mouse_down_value = automation_value
 				for index in selected_points:
-					automation_points[index].x = clamp(automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
+					if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
+						pass
+					else:
+						automation_points[index].x = clamp(automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
 					automation_points[index].y = clamp(automation_points[index].y + point_offset_amount.y, min_y, max_y)
 			queue_redraw()
+			
+		if selected_points.size() != 1:
+			value_edit_x.editable = false
+			value_edit_x.text = "%.3f" % automation_value.x
+			value_edit_y.editable = false
+			value_edit_y.text = "%.3f" % automation_value.y
+		else:
+			#check the values are not currently being edited, if not update them with the current value for the selected automation point
+			if !value_edit_x.has_focus() and !value_edit_y.has_focus():
+				var selected_point_value = automation_points[selected_points[0]]
+				if selected_point_value.x == 0.0 or selected_point_value.x == 100.0:
+					value_edit_x.editable = false
+				else:
+					value_edit_x.editable = true
+				value_edit_x.text = "%.3f" % selected_point_value.x
+				value_edit_y.editable = true
+				value_edit_y.text = "%.3f" % selected_point_value.y
 			
 	if event is InputEventKey and event.pressed:
 		if (event.keycode == KEY_BACKSPACE or event.keycode == KEY_DELETE):
@@ -152,6 +175,7 @@ func select_points_in_drag_range() -> void:
 				
 		queue_redraw()
 
+
 func _draw():
 	#sort points
 	var sorted = []
@@ -226,3 +250,44 @@ func get_point_at_pos(pos: Vector2) -> int:
 				return i
 		i += 1
 	return -1
+
+
+func _on_x_edit_text_submitted(new_text: String) -> void:
+	var old_value = automation_points[selected_points[0]]
+	
+	if new_text.is_valid_float():
+		var new_val = new_text.to_float()
+		
+		if new_val < 0.0001 or new_val > 99.9999:
+			value_edit_x.text = "%.3f" % old_value.x
+		else:
+			automation_points[selected_points[0]].x = new_val
+			
+		queue_redraw()
+	else:
+		value_edit_x.text = "%.3f" % old_value.x
+		
+		
+func _on_x_edit_focus_exited() -> void:
+	if selected_points.size() == 1:
+		_on_x_edit_text_submitted(value_edit_x.text)
+	
+	
+func _on_y_edit_text_submitted(new_text: String) -> void:
+	var old_value = automation_points[selected_points[0]]
+	
+	if new_text.is_valid_float():
+		var new_val = new_text.to_float()
+		
+		if new_val <= min_y or new_val >= max_y:
+			value_edit_y.text = "%.3f" % old_value.y
+		else:
+			automation_points[selected_points[0]].y = new_val
+			
+		queue_redraw()
+	else:
+		value_edit_y.text = "%.3f" % old_value.y
+
+func _on_y_edit_focus_exited() -> void:
+	if selected_points.size() == 1:
+		_on_y_edit_text_submitted(value_edit_y.text)
