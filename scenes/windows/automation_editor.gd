@@ -2,7 +2,7 @@ extends Control
 class_name AutomationEditor
 
 const max_zoom = 10.0
-const zoom_per_scroll = 0.2
+const zoom_per_scroll = 0.5
 const point_size = 10
 
 var zoom_factor = 1.0
@@ -19,10 +19,12 @@ var selection_start = null
 var selection_end = null
 
 var mouse_down = false
+var mouse_down_value = 0.0
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	focus_mode = Control.FOCUS_CLICK
 	
 
 func _gui_input(event):
@@ -33,14 +35,12 @@ func _gui_input(event):
 
 		# begin drag on press
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			mouse_down = true
 			select_points(event.position, event.shift_pressed)
 
 		# end drag on release
 		elif event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			mouse_down = false
 			select_points_in_drag_range()
-			print("Drag released")
 			
 		# edit point value
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -59,11 +59,29 @@ func _gui_input(event):
 			var automation_value = convert_to_automation_value(event.position)
 			selection_end = automation_value.x
 			
-			if selected_points.size() == 1:
-				automation_points[selected_points[0]] = automation_value
+			if selected_points.size() > 0:
+				var point_offset_amount = automation_value - mouse_down_value
+				mouse_down_value = automation_value
+				for index in selected_points:
+					automation_points[index].x = clamp(automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
+					automation_points[index].y = clamp(automation_points[index].y + point_offset_amount.y, min_y, max_y)
 			queue_redraw()
 			
-			
+	if event is InputEventKey and event.pressed:
+		if (event.keycode == KEY_BACKSPACE or event.keycode == KEY_DELETE):
+			if selected_points.size() > 0:
+				#iterate over selected indexes in reverse order then remove
+				selected_points.sort()
+				selected_points.reverse()
+				for point in selected_points:
+					automation_points.remove_at(point)
+				
+				selected_points.clear()
+				selection_start = null
+				selection_end = null
+				queue_redraw()
+				
+		
 func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	#convert mouse position to a (decimal) percentage of automation window size
 	zoom_screen_position = zoom_screen_position / self.size.x
@@ -92,6 +110,7 @@ func add_remove_point(mouse_position: Vector2) -> void:
 			pass
 		else:
 			automation_points.remove_at(matching_point)
+			selected_points.clear()
 	else:
 		automation_points.append(automation_value)
 		
@@ -99,6 +118,9 @@ func add_remove_point(mouse_position: Vector2) -> void:
 	
 func select_points(mouse_position: Vector2, shift_pressed: bool) -> void:
 	var automation_value = convert_to_automation_value(mouse_position)
+	mouse_down = true
+	mouse_down_value = automation_value
+	
 	var point_selected = get_point_at_pos(automation_value)
 	
 	if point_selected == -1:
@@ -106,18 +128,19 @@ func select_points(mouse_position: Vector2, shift_pressed: bool) -> void:
 		selection_start = automation_value.x
 		selection_end = null
 	else:
-		if !shift_pressed:
+		if selected_points.has(point_selected):
+			pass
+		else:
+			if !shift_pressed:
+				selected_points.clear()
+			selected_points.append(point_selected)
 			
-			selected_points.clear()
-		selected_points.append(point_selected)
-		
 		selection_start = null
 		selection_end = null
 	
 	queue_redraw()
 
 func select_points_in_drag_range() -> void:
-	print("selecting points")
 	if selection_start != null and selection_end != null:
 		selected_points.clear()
 		
