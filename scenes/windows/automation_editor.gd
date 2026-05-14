@@ -24,10 +24,14 @@ var selection_end = null
 var mouse_down = false
 var mouse_down_value = 0.0
 
+var default_font : Font = ThemeDB.fallback_font
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_CLICK
+	
+	
 	
 
 func _gui_input(event):
@@ -136,7 +140,7 @@ func add_remove_point(mouse_position: Vector2) -> void:
 			selected_points.clear()
 	else:
 		automation_points.append(automation_value)
-		
+		selected_points.append(automation_points.size() - 1)
 	queue_redraw()
 	
 func select_points(mouse_position: Vector2, shift_pressed: bool) -> void:
@@ -177,6 +181,18 @@ func select_points_in_drag_range() -> void:
 
 
 func _draw():
+	#draw grid
+	for i in range(10):
+		var position = convert_x_to_screen_position(i * 10)
+		if position < 0:
+			pass
+		elif position < self.size.x:
+			pass
+			
+		draw_line(Vector2(position, 0), Vector2(position, self.size.y), Color(1, 1, 1, 0.1), 1)
+		draw_string(default_font, Vector2(position + 8, 16), str(i * 10) + "%", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.2))
+	
+	
 	#sort points
 	var sorted = []
 	sorted = automation_points.duplicate()
@@ -223,10 +239,16 @@ func _draw():
 		draw_rect(Rect2(min(selection_start_screen, selection_end_screen), 0, abs(selection_end_screen - selection_start_screen), self.size.y), Color(0.9, 0.9, 0.9, 0.1))
 
 func convert_to_screen_position(automation_point: Vector2) -> Vector2:
-	var point_x_pos = (((automation_point.x - zoomed_offset) * zoom_factor) / 100) * self.size.x
-	var point_y_pos = self.size.y - (((automation_point.y - min_y) / (max_y - min_y)) * self.size.y)
+	var point_x_pos = convert_x_to_screen_position(automation_point.x)
+	var point_y_pos = convert_y_to_screen_position(automation_point.y)
 	
 	return Vector2(point_x_pos, point_y_pos)
+
+func convert_x_to_screen_position(automation_x_value: float) -> float:
+	return (((automation_x_value - zoomed_offset) * zoom_factor) / 100) * self.size.x
+	
+func convert_y_to_screen_position(automation_y_value: float) -> float:
+	return self.size.y - (((automation_y_value - min_y) / (max_y - min_y)) * self.size.y)
 
 func convert_to_automation_value(screen_position: Vector2) -> Vector2:
 	var point_x_value = ((100 / zoom_factor) * (screen_position.x / self.size.x)) + zoomed_offset
