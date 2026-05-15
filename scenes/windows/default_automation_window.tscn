@@ -58,6 +58,13 @@ button_pressed = true
 button_group = ExtResource("3_y26o1")
 text = "✎"
 
+[node name="EraseButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
+custom_minimum_size = Vector2(31, 0)
+layout_mode = 2
+toggle_mode = true
+button_group = ExtResource("3_y26o1")
+text = "✕"
+
 [node name="ExpandVButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
 custom_minimum_size = Vector2(31, 0)
 layout_mode = 2
@@ -121,6 +128,7 @@ metadata/_tab_index = 1
 
 [connection signal="close_requested" from="." to="." method="_on_close_requested"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/PencilButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_pencil_button_toggled"]
+[connection signal="toggled" from="TabContainer/Visual Editor/EditorData/EraseButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_erase_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandVButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_v_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandHButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_h_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/SkewButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_skew_button_toggled"]
