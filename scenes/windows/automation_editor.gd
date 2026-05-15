@@ -4,6 +4,9 @@ class_name AutomationEditor
 @onready var value_edit_x = $"../../EditorData/XEdit"
 @onready var value_edit_y = $"../../EditorData/YEdit"
 
+var pencil_icon = load("res://theme/images/pencil_32.png")
+var pencil_icon_hidpi = load("res://theme/images/pencil_64.png")
+
 const max_zoom = 10.0
 const zoom_per_scroll = 0.5
 const point_size = 10
@@ -23,6 +26,9 @@ var selection_end = null
 
 var mouse_down = false
 var mouse_down_value = 0.0
+var previous_mouse_direction = null
+
+var predraw_automation_count = 0
 
 var default_font : Font = ThemeDB.fallback_font
 
@@ -30,6 +36,10 @@ var default_font : Font = ThemeDB.fallback_font
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_CLICK
+	if DisplayServer.screen_get_dpi(0) >= 144:
+		Input.set_custom_mouse_cursor(pencil_icon_hidpi, Input.CURSOR_HELP)
+	else:
+		Input.set_custom_mouse_cursor(pencil_icon, Input.CURSOR_HELP)
 	
 	
 	
@@ -43,11 +53,18 @@ func _gui_input(event):
 		# begin drag on press
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			select_points(event.position, event.shift_pressed)
+			predraw_automation_count = automation_points.size() - 1
+			previous_mouse_direction = null
 
+				
 		# end drag on release
 		elif event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			mouse_down = false
+			previous_mouse_direction = null
+			set_default_cursor_shape(Control.CURSOR_ARROW)
 			select_points_in_drag_range()
+
+			
 			
 		# edit point value
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -62,11 +79,18 @@ func _gui_input(event):
 			zoom_automation(zoom_per_scroll * -1, event.position.x)
 			
 	elif event is InputEventMouseMotion:
+		if event.alt_pressed:
+			set_default_cursor_shape(Control.CURSOR_HELP)
+		else:
+			set_default_cursor_shape(Control.CURSOR_ARROW)
 		var automation_value = convert_to_automation_value(event.position)
 		if mouse_down:
-			selection_end = automation_value.x
+			if selection_start != null and !event.alt_pressed:
+				set_default_cursor_shape(Control.CURSOR_IBEAM)
+				selection_end = automation_value.x
 			
 			if selected_points.size() > 0:
+				set_default_cursor_shape(Control.CURSOR_DRAG)
 				var point_offset_amount = automation_value - mouse_down_value
 				mouse_down_value = automation_value
 				for index in selected_points:
@@ -75,6 +99,34 @@ func _gui_input(event):
 					else:
 						automation_points[index].x = clamp(automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
 					automation_points[index].y = clamp(automation_points[index].y + point_offset_amount.y, min_y, max_y)
+				
+			if event.alt_pressed:
+				var current_mouse_direction
+				if event.relative.x < 0:
+					current_mouse_direction = "left"
+				elif event.relative.x > 0:
+					current_mouse_direction = "right"
+					
+				if current_mouse_direction != previous_mouse_direction or previous_mouse_direction == null:
+					predraw_automation_count = automation_points.size() - 1
+					selection_start = automation_value.x
+				
+				previous_mouse_direction = current_mouse_direction
+				
+				if automation_value.x >= 0.01 and automation_value.x <= 99.99:
+					for i in range(predraw_automation_count, -1, -1):
+						var point = automation_points[i]
+						if point.x >= min(selection_start, automation_value.x) and point.x <= max(selection_start, automation_value.x):
+							if point.x != 0 and point.x != 100:
+								automation_points.remove_at(i)
+								predraw_automation_count -= 1
+					if abs(automation_points[automation_points.size() - 1].x - automation_value.x) > 2 / zoom_factor:
+						automation_points.append(automation_value)
+				elif automation_value.x <= 0:
+					automation_points[0].y = automation_value.y
+				elif automation_value.x >= 100:
+					automation_points[1].y = automation_value.y
+			
 			queue_redraw()
 			
 		if selected_points.size() != 1:
@@ -94,21 +146,27 @@ func _gui_input(event):
 				value_edit_y.editable = true
 				value_edit_y.text = "%.3f" % selected_point_value.y
 			
-	if event is InputEventKey and event.pressed:
-		if (event.keycode == KEY_BACKSPACE or event.keycode == KEY_DELETE):
+	if event is InputEventKey:
+		if (event.keycode == KEY_BACKSPACE or event.keycode == KEY_DELETE) and event.pressed:
 			if selected_points.size() > 0:
 				#iterate over selected indexes in reverse order then remove
 				selected_points.sort()
 				selected_points.reverse()
 				for point in selected_points:
-					automation_points.remove_at(point)
+					if automation_points[point].x == 0 or automation_points[point].x == 100:
+						pass
+					else:
+						automation_points.remove_at(point)
 				
 				selected_points.clear()
 				selection_start = null
 				selection_end = null
 				queue_redraw()
-				
-		
+		elif event.keycode == KEY_ALT and event.pressed:
+			set_default_cursor_shape(Control.CURSOR_HELP)
+		elif event.keycode == KEY_ALT and not event.pressed:
+			set_default_cursor_shape(Control.CURSOR_ARROW)
+
 func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	#convert mouse position to a (decimal) percentage of automation window size
 	zoom_screen_position = zoom_screen_position / self.size.x
@@ -178,7 +236,6 @@ func select_points_in_drag_range() -> void:
 			i += 1
 				
 		queue_redraw()
-
 
 func _draw():
 	#draw grid
