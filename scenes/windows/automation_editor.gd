@@ -244,13 +244,12 @@ func select_points_in_drag_range() -> void:
 func drag_automation_points(automation_value: Vector2) -> void:
 	set_default_cursor_shape(Control.CURSOR_DRAG)
 	var point_offset_amount = automation_value - mouse_down_value
-	mouse_down_value = automation_value
 	for index in selected_points:
 		if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
 			pass
 		else:
-			automation_points[index].x = clamp(automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
-		automation_points[index].y = clamp(automation_points[index].y + point_offset_amount.y, min_y, max_y)
+			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
+		automation_points[index].y = clamp(pre_edited_automation_points[index].y + point_offset_amount.y, min_y, max_y)
 		
 		
 func pencil_draw_automation(relative_x: float, automation_value: Vector2) -> void:
