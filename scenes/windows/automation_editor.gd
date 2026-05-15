@@ -29,6 +29,7 @@ var mouse_down = false
 var mouse_down_value = 0.0
 var previous_horizontal_mouse_direction = null
 var previous_vertical_mouse_direction = null
+var alt_tool = "pencil"
 
 var predraw_automation_count = 0
 
@@ -60,7 +61,7 @@ func _gui_input(event):
 			mouse_down_value = automation_value
 			
 			pre_edited_automation_points = automation_points.duplicate()
-			if !event.ctrl_pressed:
+			if !event.alt_pressed:
 				select_points(automation_value, event.shift_pressed)
 			predraw_automation_count = automation_points.size() - 1
 			previous_horizontal_mouse_direction = null
@@ -90,29 +91,53 @@ func _gui_input(event):
 		var automation_value = convert_to_automation_value(event.position)
 		
 		if event.alt_pressed:
-			set_default_cursor_shape(Control.CURSOR_HELP)
+			if alt_tool == "pencil":
+				set_default_cursor_shape(Control.CURSOR_HELP)
+			elif alt_tool == "scale_v":
+				set_default_cursor_shape(Control.CURSOR_VSIZE)
+			elif alt_tool == "scale_h":
+				set_default_cursor_shape(Control.CURSOR_HSIZE)
 		else:
 			set_default_cursor_shape(Control.CURSOR_ARROW)
 		
 		if mouse_down:
-			if selection_start != null and !event.alt_pressed and !event.ctrl_pressed:
+			if selection_start != null and !event.alt_pressed:
 				set_default_cursor_shape(Control.CURSOR_IBEAM)
 				selection_end = automation_value.x
 			
-			if selected_points.size() > 0 and !event.ctrl_pressed:
+			if selected_points.size() > 0 and !event.alt_pressed:
 				drag_automation_points(automation_value)
 				
 			if event.alt_pressed:
-				pencil_draw_automation(event.relative.x, automation_value)
-					
-			if event.ctrl_pressed:
-				selection_end = null
-				if selected_points.size() > 1:
-					scale_vertically(automation_value, selected_points)
-				else:
+				if alt_tool == "pencil":
+					selection_end = null
 					selected_points.clear()
-					scale_vertically(automation_value, range(automation_points.size()))
-				#scale_horizontally(automation_value)
+					pencil_draw_automation(event.relative.x, automation_value)
+				elif alt_tool == "scale_v":
+					selection_end = null
+					if selected_points.size() > 1:
+						scale_vertically(automation_value, selected_points)
+					else:
+						selected_points.clear()
+						scale_vertically(automation_value, range(automation_points.size()))
+				elif alt_tool == "scale_h":
+					selection_end = null
+					if selected_points.size() > 1:
+						scale_horizontally(automation_value, selected_points)
+					else:
+						selected_points.clear()
+						scale_horizontally(automation_value, range(automation_points.size()))
+				elif alt_tool == "skew":
+					selection_end = null
+					if selected_points.size() > 1:
+						skew_points(automation_value, selected_points)
+					else:
+						selected_points.clear()
+						skew_points(automation_value, range(automation_points.size()))
+					
+			#if event.ctrl_pressed:
+				#
+				##scale_horizontally(automation_value)
 
 					
 			queue_redraw()
@@ -124,7 +149,12 @@ func _gui_input(event):
 		if (event.keycode == KEY_BACKSPACE or event.keycode == KEY_DELETE) and event.pressed:
 			delete_selected_points()
 		elif event.keycode == KEY_ALT and event.pressed:
-			set_default_cursor_shape(Control.CURSOR_HELP)
+			if alt_tool == "pencil":
+				set_default_cursor_shape(Control.CURSOR_HELP)
+			elif alt_tool == "scale_v":
+				set_default_cursor_shape(Control.CURSOR_VSIZE)
+			elif alt_tool == "scale_h":
+				set_default_cursor_shape(Control.CURSOR_HSIZE)
 		elif event.keycode == KEY_ALT and not event.pressed:
 			set_default_cursor_shape(Control.CURSOR_ARROW)
 
@@ -275,6 +305,19 @@ func scale_horizontally(automation_value: Vector2, points_to_scale: Array) -> vo
 		var scaled_x = mouse_down_value.x + (distance_from_centre * multiplier)
 		
 		automation_points[point].x = clamp(scaled_x, 0.001, 99.999)
+		
+func skew_points(automation_value: Vector2, points_to_scale: Array) -> void:
+	var multiplier = ((automation_value.x - mouse_down_value.x) / 100) * 2
+	
+	for point in points_to_scale:
+		var original_x = pre_edited_automation_points[point].x
+		var original_y = pre_edited_automation_points[point].y
+		
+		var distance_from_centre = original_x - mouse_down_value.x
+		
+		var scaled_y = original_y + (distance_from_centre * multiplier)
+		
+		automation_points[point].y = clamp(scaled_y, min_y, max_y)
 
 func fill_coordinate_boxes(automation_value: Vector2) -> void:
 	if selected_points.size() != 1:
@@ -375,12 +418,12 @@ func sort_points(a, b):
 	return a.x < b.x
 
 func get_point_at_pos(pos: Vector2) -> int:
-	var y_tolerance = (max_y - min_y) / (self.size.y * 0.25)
+	var y_tolerance = (max_y - min_y) / (self.size.y * 0.4)
 	
 	var i = 0
 	for point in automation_points:
 		var x_difference = point.x - pos.x
-		if x_difference >= (-0.5 / zoom_factor) and x_difference <= (0.5 / zoom_factor):
+		if x_difference >= (-0.7 / zoom_factor) and x_difference <= (0.7 / zoom_factor):
 			var y_difference = point.y - pos.y
 			if y_difference >= (y_tolerance * -1) and y_difference <= y_tolerance:
 				return i
@@ -427,3 +470,23 @@ func _on_y_edit_text_submitted(new_text: String) -> void:
 func _on_y_edit_focus_exited() -> void:
 	if selected_points.size() == 1:
 		_on_y_edit_text_submitted(value_edit_y.text)
+
+
+func _on_pencil_button_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		alt_tool = "pencil"
+
+
+func _on_expand_v_button_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		alt_tool = "scale_v"
+
+
+func _on_expand_h_button_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		alt_tool = "scale_h"
+
+
+func _on_skew_button_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		alt_tool = "skew"
