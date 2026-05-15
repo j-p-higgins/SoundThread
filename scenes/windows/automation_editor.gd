@@ -20,13 +20,15 @@ var exponential: bool
 
 var automation_points = []
 var selected_points = []
+var pre_edited_automation_points = []
 
 var selection_start = null
 var selection_end = null
 
 var mouse_down = false
 var mouse_down_value = 0.0
-var previous_mouse_direction = null
+var previous_horizontal_mouse_direction = null
+var previous_vertical_mouse_direction = null
 
 var predraw_automation_count = 0
 
@@ -53,15 +55,22 @@ func _gui_input(event):
 
 		# begin drag on press
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			select_points(event.position, event.shift_pressed)
+			var automation_value = convert_to_automation_value(event.position)
+			mouse_down = true
+			mouse_down_value = automation_value
+			
+			pre_edited_automation_points = automation_points.duplicate()
+			if !event.ctrl_pressed:
+				select_points(automation_value, event.shift_pressed)
 			predraw_automation_count = automation_points.size() - 1
-			previous_mouse_direction = null
-
+			previous_horizontal_mouse_direction = null
+			previous_vertical_mouse_direction = null
 				
 		# end drag on release
 		elif event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			mouse_down = false
-			previous_mouse_direction = null
+			previous_horizontal_mouse_direction = null
+			previous_vertical_mouse_direction = null
 			set_default_cursor_shape(Control.CURSOR_ARROW)
 			select_points_in_drag_range()			
 			
@@ -90,15 +99,21 @@ func _gui_input(event):
 				set_default_cursor_shape(Control.CURSOR_IBEAM)
 				selection_end = automation_value.x
 			
-			if selected_points.size() > 0:
+			if selected_points.size() > 0 and !event.ctrl_pressed:
 				drag_automation_points(automation_value)
 				
 			if event.alt_pressed:
 				pencil_draw_automation(event.relative.x, automation_value)
 					
-			#if event.ctrl_pressed:
-				#for point in selected_points:
-					#automation_points[point].y = automation_points[point].y * mouse_down_value
+			if event.ctrl_pressed:
+				selection_end = null
+				if selected_points.size() > 1:
+					scale_vertically(automation_value, selected_points)
+				else:
+					selected_points.clear()
+					scale_vertically(automation_value, range(automation_points.size()))
+				#scale_horizontally(automation_value)
+
 					
 			queue_redraw()
 			
@@ -163,11 +178,8 @@ func delete_selected_points() -> void:
 		selection_end = null
 		queue_redraw()
 		
-func select_points(mouse_position: Vector2, shift_pressed: bool) -> void:
-	var automation_value = convert_to_automation_value(mouse_position)
-	mouse_down = true
-	mouse_down_value = automation_value
-	
+func select_points(automation_value: Vector2, shift_pressed: bool) -> void:
+
 	var point_selected = get_point_at_pos(automation_value)
 	
 	if point_selected == -1:
@@ -218,11 +230,11 @@ func pencil_draw_automation(relative_x: float, automation_value: Vector2) -> voi
 	elif relative_x > 0:
 		current_mouse_direction = "right"
 		
-	if current_mouse_direction != previous_mouse_direction or previous_mouse_direction == null:
+	if current_mouse_direction != previous_horizontal_mouse_direction or previous_horizontal_mouse_direction == null:
 		predraw_automation_count = automation_points.size() - 1
 		selection_start = automation_value.x
 	
-	previous_mouse_direction = current_mouse_direction
+	previous_horizontal_mouse_direction = current_mouse_direction
 	
 	if automation_value.x >= 0.01 and automation_value.x <= 99.99:
 		for i in range(predraw_automation_count, -1, -1):
@@ -237,6 +249,32 @@ func pencil_draw_automation(relative_x: float, automation_value: Vector2) -> voi
 		automation_points[0].y = automation_value.y
 	elif automation_value.x >= 100:
 		automation_points[1].y = automation_value.y
+
+func scale_vertically(automation_value: Vector2, points_to_scale: Array) -> void:
+	var multiplier = 1 + ((automation_value.y - mouse_down_value.y) / (max_y - min_y) * 2)
+
+	for point in points_to_scale:
+		var original_y = pre_edited_automation_points[point].y
+		
+		var distance_from_centre = original_y - mouse_down_value.y
+		
+		var scaled_y = mouse_down_value.y + (distance_from_centre * multiplier)
+		
+		automation_points[point].y = clamp(scaled_y, min_y, max_y)
+
+func scale_horizontally(automation_value: Vector2, points_to_scale: Array) -> void:
+	var multiplier = 1 + (((automation_value.x - mouse_down_value.x) / 100) * 2)
+
+	for point in points_to_scale:
+		if automation_points[point].x == 0 or automation_points[point].x == 100:
+			continue
+		var original_x = pre_edited_automation_points[point].x
+		
+		var distance_from_centre = original_x - mouse_down_value.x
+		
+		var scaled_x = mouse_down_value.x + (distance_from_centre * multiplier)
+		
+		automation_points[point].x = clamp(scaled_x, 0.001, 99.999)
 
 func fill_coordinate_boxes(automation_value: Vector2) -> void:
 	if selected_points.size() != 1:
