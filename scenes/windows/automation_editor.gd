@@ -36,6 +36,7 @@ var default_font : Font = ThemeDB.fallback_font
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_CLICK
+	
 	if DisplayServer.screen_get_dpi(0) >= 144:
 		Input.set_custom_mouse_cursor(pencil_icon_hidpi, Input.CURSOR_HELP)
 	else:
@@ -62,9 +63,7 @@ func _gui_input(event):
 			mouse_down = false
 			previous_mouse_direction = null
 			set_default_cursor_shape(Control.CURSOR_ARROW)
-			select_points_in_drag_range()
-
-			
+			select_points_in_drag_range()			
 			
 		# edit point value
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -79,89 +78,36 @@ func _gui_input(event):
 			zoom_automation(zoom_per_scroll * -1, event.position.x)
 			
 	elif event is InputEventMouseMotion:
+		var automation_value = convert_to_automation_value(event.position)
+		
 		if event.alt_pressed:
 			set_default_cursor_shape(Control.CURSOR_HELP)
 		else:
 			set_default_cursor_shape(Control.CURSOR_ARROW)
-		var automation_value = convert_to_automation_value(event.position)
+		
 		if mouse_down:
-			if selection_start != null and !event.alt_pressed:
+			if selection_start != null and !event.alt_pressed and !event.ctrl_pressed:
 				set_default_cursor_shape(Control.CURSOR_IBEAM)
 				selection_end = automation_value.x
 			
 			if selected_points.size() > 0:
-				set_default_cursor_shape(Control.CURSOR_DRAG)
-				var point_offset_amount = automation_value - mouse_down_value
-				mouse_down_value = automation_value
-				for index in selected_points:
-					if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
-						pass
-					else:
-						automation_points[index].x = clamp(automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
-					automation_points[index].y = clamp(automation_points[index].y + point_offset_amount.y, min_y, max_y)
+				drag_automation_points(automation_value)
 				
 			if event.alt_pressed:
-				var current_mouse_direction
-				if event.relative.x < 0:
-					current_mouse_direction = "left"
-				elif event.relative.x > 0:
-					current_mouse_direction = "right"
+				pencil_draw_automation(event.relative.x, automation_value)
 					
-				if current_mouse_direction != previous_mouse_direction or previous_mouse_direction == null:
-					predraw_automation_count = automation_points.size() - 1
-					selection_start = automation_value.x
-				
-				previous_mouse_direction = current_mouse_direction
-				
-				if automation_value.x >= 0.01 and automation_value.x <= 99.99:
-					for i in range(predraw_automation_count, -1, -1):
-						var point = automation_points[i]
-						if point.x >= min(selection_start, automation_value.x) and point.x <= max(selection_start, automation_value.x):
-							if point.x != 0 and point.x != 100:
-								automation_points.remove_at(i)
-								predraw_automation_count -= 1
-					if abs(automation_points[automation_points.size() - 1].x - automation_value.x) > 2 / zoom_factor:
-						automation_points.append(automation_value)
-				elif automation_value.x <= 0:
-					automation_points[0].y = automation_value.y
-				elif automation_value.x >= 100:
-					automation_points[1].y = automation_value.y
-			
+			#if event.ctrl_pressed:
+				#for point in selected_points:
+					#automation_points[point].y = automation_points[point].y * mouse_down_value
+					
 			queue_redraw()
 			
-		if selected_points.size() != 1:
-			value_edit_x.editable = false
-			value_edit_x.text = "%.3f" % automation_value.x
-			value_edit_y.editable = false
-			value_edit_y.text = "%.3f" % automation_value.y
-		else:
-			#check the values are not currently being edited, if not update them with the current value for the selected automation point
-			if !value_edit_x.has_focus() and !value_edit_y.has_focus():
-				var selected_point_value = automation_points[selected_points[0]]
-				if selected_point_value.x == 0.0 or selected_point_value.x == 100.0:
-					value_edit_x.editable = false
-				else:
-					value_edit_x.editable = true
-				value_edit_x.text = "%.3f" % selected_point_value.x
-				value_edit_y.editable = true
-				value_edit_y.text = "%.3f" % selected_point_value.y
+		fill_coordinate_boxes(automation_value)
+		
 			
 	if event is InputEventKey:
 		if (event.keycode == KEY_BACKSPACE or event.keycode == KEY_DELETE) and event.pressed:
-			if selected_points.size() > 0:
-				#iterate over selected indexes in reverse order then remove
-				selected_points.sort()
-				selected_points.reverse()
-				for point in selected_points:
-					if automation_points[point].x == 0 or automation_points[point].x == 100:
-						pass
-					else:
-						automation_points.remove_at(point)
-				
-				selected_points.clear()
-				selection_start = null
-				selection_end = null
-				queue_redraw()
+			delete_selected_points()
 		elif event.keycode == KEY_ALT and event.pressed:
 			set_default_cursor_shape(Control.CURSOR_HELP)
 		elif event.keycode == KEY_ALT and not event.pressed:
@@ -201,6 +147,22 @@ func add_remove_point(mouse_position: Vector2) -> void:
 		selected_points.append(automation_points.size() - 1)
 	queue_redraw()
 	
+func delete_selected_points() -> void:
+	if selected_points.size() > 0:
+		#iterate over selected indexes in reverse order then remove
+		selected_points.sort()
+		selected_points.reverse()
+		for point in selected_points:
+			if automation_points[point].x == 0 or automation_points[point].x == 100:
+				pass
+			else:
+				automation_points.remove_at(point)
+		
+		selected_points.clear()
+		selection_start = null
+		selection_end = null
+		queue_redraw()
+		
 func select_points(mouse_position: Vector2, shift_pressed: bool) -> void:
 	var automation_value = convert_to_automation_value(mouse_position)
 	mouse_down = true
@@ -236,6 +198,63 @@ func select_points_in_drag_range() -> void:
 			i += 1
 				
 		queue_redraw()
+		
+func drag_automation_points(automation_value: Vector2) -> void:
+	set_default_cursor_shape(Control.CURSOR_DRAG)
+	var point_offset_amount = automation_value - mouse_down_value
+	mouse_down_value = automation_value
+	for index in selected_points:
+		if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
+			pass
+		else:
+			automation_points[index].x = clamp(automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
+		automation_points[index].y = clamp(automation_points[index].y + point_offset_amount.y, min_y, max_y)
+		
+		
+func pencil_draw_automation(relative_x: float, automation_value: Vector2) -> void:
+	var current_mouse_direction
+	if relative_x < 0:
+		current_mouse_direction = "left"
+	elif relative_x > 0:
+		current_mouse_direction = "right"
+		
+	if current_mouse_direction != previous_mouse_direction or previous_mouse_direction == null:
+		predraw_automation_count = automation_points.size() - 1
+		selection_start = automation_value.x
+	
+	previous_mouse_direction = current_mouse_direction
+	
+	if automation_value.x >= 0.01 and automation_value.x <= 99.99:
+		for i in range(predraw_automation_count, -1, -1):
+			var point = automation_points[i]
+			if point.x >= min(selection_start, automation_value.x) and point.x <= max(selection_start, automation_value.x):
+				if point.x != 0 and point.x != 100:
+					automation_points.remove_at(i)
+					predraw_automation_count -= 1
+		if abs(automation_points[automation_points.size() - 1].x - automation_value.x) > 2 / zoom_factor:
+			automation_points.append(automation_value)
+	elif automation_value.x <= 0:
+		automation_points[0].y = automation_value.y
+	elif automation_value.x >= 100:
+		automation_points[1].y = automation_value.y
+
+func fill_coordinate_boxes(automation_value: Vector2) -> void:
+	if selected_points.size() != 1:
+		value_edit_x.editable = false
+		value_edit_x.text = "%.3f" % automation_value.x
+		value_edit_y.editable = false
+		value_edit_y.text = "%.3f" % automation_value.y
+	else:
+		#check the values are not currently being edited, if not update them with the current value for the selected automation point
+		if !value_edit_x.has_focus() and !value_edit_y.has_focus():
+			var selected_point_value = automation_points[selected_points[0]]
+			if selected_point_value.x == 0.0 or selected_point_value.x == 100.0:
+				value_edit_x.editable = false
+			else:
+				value_edit_x.editable = true
+			value_edit_x.text = "%.3f" % selected_point_value.x
+			value_edit_y.editable = true
+			value_edit_y.text = "%.3f" % selected_point_value.y
 
 func _draw():
 	#draw grid
