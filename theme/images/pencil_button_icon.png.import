@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bqt4cn5dmp3bs"
-path="res://.godot/imported/pencil.png-70979812aa298f65af94d1d5694944e8.ctex"
+uid="uid://bgr4hcmpink18"
+path="res://.godot/imported/pencil_button_icon.png-06395230780a93650414e09792233433.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://theme/images/pencil.png"
-dest_files=["res://.godot/imported/pencil.png-70979812aa298f65af94d1d5694944e8.ctex"]
+source_file="res://theme/images/pencil_button_icon.png"
+dest_files=["res://.godot/imported/pencil_button_icon.png-06395230780a93650414e09792233433.ctex"]
 
 [params]
 

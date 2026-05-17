@@ -6,6 +6,8 @@ class_name AutomationEditor
 
 var pencil_icon = load("res://theme/images/pencil_32.png")
 var pencil_icon_hidpi = load("res://theme/images/pencil_64.png")
+var eraser_icon = load("res://theme/images/eraser_32.png")
+var eraser_icon_hidpi = load("res://theme/images/eraser_64.png")
 
 const max_zoom = 10.0
 const zoom_per_scroll = 0.5
@@ -42,8 +44,10 @@ func _ready() -> void:
 	
 	if DisplayServer.screen_get_dpi(0) >= 144:
 		Input.set_custom_mouse_cursor(pencil_icon_hidpi, Input.CURSOR_HELP)
+		Input.set_custom_mouse_cursor(eraser_icon_hidpi, Input.CURSOR_FORBIDDEN)
 	else:
 		Input.set_custom_mouse_cursor(pencil_icon, Input.CURSOR_HELP)
+		Input.set_custom_mouse_cursor(eraser_icon, Input.CURSOR_FORBIDDEN)
 	
 	
 	
@@ -52,7 +56,8 @@ func _gui_input(event):
 	if event is InputEventMouseButton:
 		# double-click: delete only if not fixed, otherwise add new
 		if event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
-			add_remove_point(event.position)
+			if !event.alt_pressed:
+				add_remove_point(event.position)
 
 		# begin drag on press
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -66,12 +71,15 @@ func _gui_input(event):
 			predraw_automation_count = automation_points.size() - 1
 			previous_horizontal_mouse_direction = null
 			previous_vertical_mouse_direction = null
+			
 				
 		# end drag on release
 		elif event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			mouse_down = false
 			previous_horizontal_mouse_direction = null
 			previous_vertical_mouse_direction = null
+			if event.alt_pressed and alt_tool == "curve":
+				draw_automation_curve(event.position)
 			set_default_cursor_shape(Control.CURSOR_ARROW)
 			select_points_in_drag_range()			
 			
@@ -111,6 +119,7 @@ func _gui_input(event):
 						pencil_draw_automation(event.relative.x, automation_value)
 					"erase":
 						selection_end = null
+						selected_points.clear()
 						erase_points(automation_value)
 					"scale_v":
 						selection_end = null
@@ -133,6 +142,9 @@ func _gui_input(event):
 						else:
 							selected_points.clear()
 							skew_points(automation_value, range(automation_points.size()))
+					"curve":
+						selection_end = null
+						
 					
 			#if event.ctrl_pressed:
 				#
@@ -188,7 +200,7 @@ func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	
 func add_remove_point(mouse_position: Vector2) -> void:
 	var automation_value = convert_to_automation_value(mouse_position)
-	var matching_point = get_point_at_pos(automation_value) 
+	var matching_point = get_point_at_pos(automation_value, 1) 
 	
 	if matching_point != -1:
 		if automation_points[matching_point].x == 0 or automation_points[matching_point].x == 100:
@@ -219,7 +231,7 @@ func delete_selected_points() -> void:
 		
 func select_points(automation_value: Vector2, shift_pressed: bool) -> void:
 
-	var point_selected = get_point_at_pos(automation_value)
+	var point_selected = get_point_at_pos(automation_value, 1)
 	
 	if point_selected == -1:
 		selected_points.clear()
@@ -328,8 +340,13 @@ func skew_points(automation_value: Vector2, points_to_scale: Array) -> void:
 		automation_points[point].y = clamp(scaled_y, min_y, max_y)
 
 func erase_points(automation_value: Vector2) -> void:
-	get_point_at_pos(automation_value)
-
+	var point_to_erase = get_point_at_pos(automation_value, 3)
+	
+	if point_to_erase != -1:
+		automation_points.remove_at(point_to_erase)
+	
+	queue_redraw()
+	
 func fill_coordinate_boxes(automation_value: Vector2) -> void:
 	if selected_points.size() != 1:
 		value_edit_x.editable = false
@@ -347,6 +364,24 @@ func fill_coordinate_boxes(automation_value: Vector2) -> void:
 			value_edit_x.text = "%.3f" % selected_point_value.x
 			value_edit_y.editable = true
 			value_edit_y.text = "%.3f" % selected_point_value.y
+
+func draw_automation_curve(end_curve: Vector2) -> void:
+	var end_curve_value = convert_to_automation_value(end_curve)
+	var point_count = abs(end_curve_value.x - mouse_down_value.x) / 2
+	var y_range = abs(end_curve_value.y - mouse_down_value.y)
+	
+	var curve = []
+	for i in range(point_count):
+		curve.append(pow(i, 3))
+	
+	var x_value = mouse_down_value.x
+	for i in range(curve.size()):
+		var remapped_value = remap(curve[i], 0, curve[curve.size() - 1], mouse_down_value.y, end_curve_value.y)
+		curve[i] = remapped_value
+		automation_points.append(Vector2(x_value, curve[i]))
+		x_value += 2
+	queue_redraw()
+		
 
 func _draw():
 	#draw grid
@@ -428,13 +463,14 @@ func convert_to_automation_value(screen_position: Vector2) -> Vector2:
 func sort_points(a, b):
 	return a.x < b.x
 
-func get_point_at_pos(pos: Vector2) -> int:
-	var y_tolerance = (max_y - min_y) / (self.size.y * 0.4)
+func get_point_at_pos(pos: Vector2, tolerance_scaler: float) -> int:
+	var x_tolerance = (0.7 / zoom_factor) * tolerance_scaler
+	var y_tolerance = (max_y - min_y) / (self.size.y * 0.4) * tolerance_scaler
 	
 	var i = 0
 	for point in automation_points:
 		var x_difference = point.x - pos.x
-		if x_difference >= (-0.7 / zoom_factor) and x_difference <= (0.7 / zoom_factor):
+		if x_difference >= (x_tolerance * -1) and x_difference <= x_tolerance:
 			var y_difference = point.y - pos.y
 			if y_difference >= (y_tolerance * -1) and y_difference <= y_tolerance:
 				return i
@@ -507,3 +543,8 @@ func _on_skew_button_toggled(toggled_on: bool) -> void:
 	if toggled_on:
 		alt_tool = "skew"
 		
+
+
+func _on_curve_button_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		alt_tool = "curve"
