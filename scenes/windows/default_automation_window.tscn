@@ -102,7 +102,7 @@ layout_mode = 2
 tooltip_text = "Draw Curve (when holding alt key)"
 toggle_mode = true
 button_group = ExtResource("3_y26o1")
-text = "◞"
+text = "S"
 
 [node name="MarginContainer2" type="MarginContainer" parent="TabContainer/Visual Editor/EditorData"]
 layout_mode = 2
@@ -147,6 +147,7 @@ metadata/_tab_index = 1
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandVButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_v_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandHButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_h_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/SkewButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_skew_button_toggled"]
+[connection signal="gui_input" from="TabContainer/Visual Editor/EditorData/CurveButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_curve_button_gui_input"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/CurveButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_curve_button_toggled"]
 [connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_focus_exited"]
 [connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_text_submitted"]

@@ -32,6 +32,7 @@ var mouse_down_value = 0.0
 var previous_horizontal_mouse_direction = null
 var previous_vertical_mouse_direction = null
 var alt_tool = "pencil"
+var curve_mode = "s_curve"
 
 var predraw_automation_count = 0
 
@@ -78,10 +79,8 @@ func _gui_input(event):
 			mouse_down = false
 			previous_horizontal_mouse_direction = null
 			previous_vertical_mouse_direction = null
-			if event.alt_pressed and alt_tool == "curve":
-				draw_automation_curve(event.position)
 			set_default_cursor_shape(Control.CURSOR_ARROW)
-			select_points_in_drag_range()			
+			select_points_in_drag_range()
 			
 		# edit point value
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -144,11 +143,7 @@ func _gui_input(event):
 							skew_points(automation_value, range(automation_points.size()))
 					"curve":
 						selection_end = null
-						
-					
-			#if event.ctrl_pressed:
-				#
-				##scale_horizontally(automation_value)
+						draw_realtime_curve(automation_value)
 
 					
 			queue_redraw()
@@ -364,24 +359,64 @@ func fill_coordinate_boxes(automation_value: Vector2) -> void:
 			value_edit_x.text = "%.3f" % selected_point_value.x
 			value_edit_y.editable = true
 			value_edit_y.text = "%.3f" % selected_point_value.y
-
-func draw_automation_curve(end_curve: Vector2) -> void:
-	var end_curve_value = convert_to_automation_value(end_curve)
-	var point_count = abs(end_curve_value.x - mouse_down_value.x) / 2
-	var y_range = abs(end_curve_value.y - mouse_down_value.y)
-	
-	var curve = []
-	for i in range(point_count):
-		curve.append(pow(i, 3))
-	
-	var x_value = mouse_down_value.x
-	for i in range(curve.size()):
-		var remapped_value = remap(curve[i], 0, curve[curve.size() - 1], mouse_down_value.y, end_curve_value.y)
-		curve[i] = remapped_value
-		automation_points.append(Vector2(x_value, curve[i]))
-		x_value += 2
-	queue_redraw()
 		
+func draw_realtime_curve(mouse_value: Vector2) -> void:
+	var point_count = (abs(mouse_value.x - mouse_down_value.x) / 2) * zoom_factor
+	
+	#overwrite previous curve
+	automation_points.resize(pre_edited_automation_points.size())
+	for i in range(automation_points.size()):
+		automation_points[i] = pre_edited_automation_points[i]
+	
+	if point_count < 1:
+		#dont calculate a curve if the range is too small
+		automation_points.append(mouse_down_value)
+		automation_points.append(mouse_value)
+		return
+	else:
+		remove_points_in_range(mouse_down_value.x, mouse_value.x, automation_points.size() - 1)
+		automation_points.append(mouse_down_value)
+		
+		var x_step =  (mouse_value.x - mouse_down_value.x) / int(point_count)
+		var y_diff = mouse_down_value.y - mouse_value.y
+			
+		for i in range(point_count):
+			var t = (float(i + 1) / int(point_count))
+			var curved = t
+			match curve_mode:
+				"s_curve":
+					curved = curve_s_curve(t)
+				"ease_in":
+					if y_diff < 0:
+						curved = curve_ease_in(t)
+					else:
+						curved = curve_ease_out(t)
+				"ease_out":
+					if y_diff < 0:
+						curved = curve_ease_out(t)
+					else:
+						curved = curve_ease_in(t)
+			
+			var x = clamp(mouse_down_value.x + ((i + 1) * x_step), 0.01, 99.99)
+			var y = clamp(mouse_down_value.y + (curved * (mouse_value.y - mouse_down_value.y)), min_y, max_y)
+			
+			automation_points.append(Vector2(x, y))
+
+func curve_ease_in(t: float) -> float:
+	return pow(t, 3)
+	
+func curve_ease_out(t: float) -> float:
+	return 1 - pow(1 - t, 3)
+
+func curve_s_curve(t: float) -> float:
+	return (6 * pow(t, 5)) - (15 * pow(t, 4)) + (10 * pow(t, 3))
+	
+func remove_points_in_range(from: float, to: float, max_index: int) -> void:
+	for i in range(max_index, -1, -1):
+			var point = automation_points[i]
+			if point.x >= min(from, to) and point.x <= max(from, to):
+				if point.x != 0 and point.x != 100:
+					automation_points.remove_at(i)
 
 func _draw():
 	#draw grid
@@ -547,4 +582,21 @@ func _on_skew_button_toggled(toggled_on: bool) -> void:
 
 func _on_curve_button_toggled(toggled_on: bool) -> void:
 	if toggled_on:
-		alt_tool = "curve"
+		if alt_tool != "curve":
+			alt_tool = "curve"
+		else:
+			match curve_mode:
+				"ease_in":
+					curve_mode = "ease_out"
+					$"../../EditorData/CurveButton".text = "EO"
+				"ease_out":
+					curve_mode = "s_curve"
+					$"../../EditorData/CurveButton".text = "S"
+				"s_curve":
+					curve_mode = "ease_in"
+					$"../../EditorData/CurveButton".text = "EI"
+			print(curve_mode)
+
+
+func _on_curve_button_gui_input(event: InputEvent) -> void:
+	pass # Replace with function body.
