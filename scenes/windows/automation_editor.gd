@@ -9,6 +9,10 @@ var pencil_icon_hidpi = load("res://theme/images/pencil_64.png")
 var eraser_icon = load("res://theme/images/eraser_32.png")
 var eraser_icon_hidpi = load("res://theme/images/eraser_64.png")
 
+var ease_in_icon = load("res://theme/images/ease_in_button.png")
+var ease_out_icon = load("res://theme/images/ease_out_button.png")
+var s_curve_icon = load("res://theme/images/s_curve_button.png")
+
 const max_zoom = 10.0
 const zoom_per_scroll = 0.5
 const point_size = 10
@@ -588,14 +592,14 @@ func _on_curve_button_toggled(toggled_on: bool) -> void:
 			match curve_mode:
 				"ease_in":
 					curve_mode = "ease_out"
-					$"../../EditorData/CurveButton".text = "EO"
+					$"../../EditorData/CurveButton".icon = ease_out_icon
 				"ease_out":
 					curve_mode = "s_curve"
-					$"../../EditorData/CurveButton".text = "S"
+					$"../../EditorData/CurveButton".icon = s_curve_icon
 				"s_curve":
 					curve_mode = "ease_in"
-					$"../../EditorData/CurveButton".text = "EI"
-			print(curve_mode)
+					$"../../EditorData/CurveButton".icon = ease_in_icon
+
 
 
 func _on_curve_button_gui_input(event: InputEvent) -> void:

@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://cl1n10pr77gii"]
+[gd_scene load_steps=7 format=3 uid="uid://cl1n10pr77gii"]
 
 [ext_resource type="Script" uid="uid://cpkeju5o2ymso" path="res://scenes/windows/default_automation_window.gd" id="1_6moma"]
 [ext_resource type="Script" uid="uid://biey12ipsj6bp" path="res://scenes/windows/automation_editor.gd" id="2_7tbcr"]
 [ext_resource type="ButtonGroup" uid="uid://d1tysjtn3g6fe" path="res://scenes/windows/automation_alt_modes_button_group.tres" id="3_y26o1"]
 [ext_resource type="Texture2D" uid="uid://bgr4hcmpink18" path="res://theme/images/pencil_button_icon.png" id="4_ewkop"]
 [ext_resource type="Texture2D" uid="uid://b4vdhvlwnr7hj" path="res://theme/images/eraser_button_icon.png" id="5_lv33r"]
+[ext_resource type="Texture2D" uid="uid://l71lsveqj5nh" path="res://theme/images/s_curve_button.png" id="6_ip41q"]
 
 [node name="Window" type="Window"]
 initial_position = 2
@@ -54,7 +55,7 @@ theme_override_constants/margin_left = 1
 [node name="PencilButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
 custom_minimum_size = Vector2(31, 0)
 layout_mode = 2
-tooltip_text = "Draw (when holding alt key)"
+tooltip_text = "Draw when holding alt"
 toggle_mode = true
 button_pressed = true
 button_group = ExtResource("3_y26o1")
@@ -65,7 +66,7 @@ expand_icon = true
 [node name="EraseButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
 custom_minimum_size = Vector2(31, 0)
 layout_mode = 2
-tooltip_text = "Erase (when holding alt key)"
+tooltip_text = "Erase when holding alt"
 toggle_mode = true
 button_group = ExtResource("3_y26o1")
 icon = ExtResource("5_lv33r")
@@ -75,7 +76,7 @@ expand_icon = true
 [node name="ExpandVButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
 custom_minimum_size = Vector2(31, 0)
 layout_mode = 2
-tooltip_text = "Stretch Vertically (when holding alt key)"
+tooltip_text = "Stretch vertically when holding alt"
 toggle_mode = true
 button_group = ExtResource("3_y26o1")
 text = "↕"
@@ -83,7 +84,7 @@ text = "↕"
 [node name="ExpandHButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
 custom_minimum_size = Vector2(31, 0)
 layout_mode = 2
-tooltip_text = "Stretch Horizontally (when holding alt key)"
+tooltip_text = "Stretch horizontally when holding alt"
 toggle_mode = true
 button_group = ExtResource("3_y26o1")
 text = "↔"
@@ -91,7 +92,7 @@ text = "↔"
 [node name="SkewButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
 custom_minimum_size = Vector2(31, 0)
 layout_mode = 2
-tooltip_text = "Tilt (when holding alt key)"
+tooltip_text = "Tilt when holding alt"
 toggle_mode = true
 button_group = ExtResource("3_y26o1")
 text = "↗"
@@ -99,10 +100,12 @@ text = "↗"
 [node name="CurveButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
 custom_minimum_size = Vector2(31, 0)
 layout_mode = 2
-tooltip_text = "Draw Curve (when holding alt key)"
+tooltip_text = "Draw curve when holding alt  (click button to cycle between curve shapes)"
 toggle_mode = true
 button_group = ExtResource("3_y26o1")
-text = "S"
+icon = ExtResource("6_ip41q")
+icon_alignment = 1
+expand_icon = true
 
 [node name="MarginContainer2" type="MarginContainer" parent="TabContainer/Visual Editor/EditorData"]
 layout_mode = 2
