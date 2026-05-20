@@ -8,6 +8,8 @@ var pencil_icon = load("res://theme/images/pencil_32.png")
 var pencil_icon_hidpi = load("res://theme/images/pencil_64.png")
 var eraser_icon = load("res://theme/images/eraser_32.png")
 var eraser_icon_hidpi = load("res://theme/images/eraser_64.png")
+var curve_icon = load("res://theme/images/curve_32.png")
+var curve_icon_hidpi = load("res://theme/images/curve_64.png")
 
 var ease_in_icon = load("res://theme/images/ease_in_button.png")
 var ease_out_icon = load("res://theme/images/ease_out_button.png")
@@ -50,9 +52,11 @@ func _ready() -> void:
 	if DisplayServer.screen_get_dpi(0) >= 144:
 		Input.set_custom_mouse_cursor(pencil_icon_hidpi, Input.CURSOR_HELP)
 		Input.set_custom_mouse_cursor(eraser_icon_hidpi, Input.CURSOR_FORBIDDEN)
+		Input.set_custom_mouse_cursor(curve_icon_hidpi, Input.CURSOR_WAIT)
 	else:
 		Input.set_custom_mouse_cursor(pencil_icon, Input.CURSOR_HELP)
 		Input.set_custom_mouse_cursor(eraser_icon, Input.CURSOR_FORBIDDEN)
+		Input.set_custom_mouse_cursor(curve_icon, Input.CURSOR_WAIT)
 	
 	
 	
@@ -177,6 +181,8 @@ func change_cursor() -> void:
 			set_default_cursor_shape(Control.CURSOR_HSIZE)
 		"skew":
 			set_default_cursor_shape(Control.CURSOR_BDIAGSIZE)
+		"curve":
+			set_default_cursor_shape(Control.CURSOR_WAIT)
 
 func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	#convert mouse position to a (decimal) percentage of automation window size
