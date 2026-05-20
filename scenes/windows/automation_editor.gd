@@ -404,6 +404,11 @@ func draw_realtime_curve(mouse_value: Vector2) -> void:
 		var x_step =  (mouse_value.x - mouse_down_value.x) / int(point_count)
 		var y_diff = mouse_down_value.y - mouse_value.y
 			
+		var start_normalised = value_to_normalised(mouse_down_value.y)
+		print(start_normalised)
+		var end_normalised = value_to_normalised(mouse_value.y)
+		print(end_normalised)
+		
 		for i in range(point_count):
 			var t = (float(i + 1) / int(point_count))
 			var curved = t
@@ -421,10 +426,32 @@ func draw_realtime_curve(mouse_value: Vector2) -> void:
 					else:
 						curved = curve_ease_in(t)
 			
+			var normalised_y = lerp(start_normalised, end_normalised, curved)
+			
 			var x = clamp(mouse_down_value.x + ((i + 1) * x_step), 0.01, 99.99)
-			var y = clamp(mouse_down_value.y + (curved * (mouse_value.y - mouse_down_value.y)), min_y, max_y)
+			#var y = clamp(mouse_down_value.y + (curved * (mouse_value.y - mouse_down_value.y)), min_y, max_y)
+			var y = clamp(normalised_to_value(normalised_y), min_y, max_y)
 			
 			automation_points.append(Vector2(x, y))
+
+func value_to_normalised(value: float) -> float:
+	if exponential:
+		var log_min = log(min_y)
+		var log_max = log(max_y)
+		
+		return inverse_lerp(log_min, log_max, log(value))
+	
+	return inverse_lerp(min_y, max_y, value)
+	
+func normalised_to_value(t: float) -> float:
+	if exponential:
+		var log_min = log(min_y)
+		var log_max = log(max_y)
+		
+		return exp(lerp(log_min, log_max, t))
+	
+	return lerp(min_y, max_y, t)
+		
 
 func curve_ease_in(t: float) -> float:
 	return pow(t, 3)
@@ -510,14 +537,38 @@ func convert_x_to_screen_position(automation_x_value: float) -> float:
 	return (((automation_x_value - zoomed_offset) * zoom_factor) / 100) * self.size.x
 	
 func convert_y_to_screen_position(automation_y_value: float) -> float:
-	return self.size.y - (((automation_y_value - min_y) / (max_y - min_y)) * self.size.y)
+	var point_y_pos
+	if !exponential:
+		point_y_pos = self.size.y - (((automation_y_value - min_y) / (max_y - min_y)) * self.size.y)
+	else:
+		var log_min = log(min_y) / log(10)
+		var log_max = log(max_y) / log(10)
+		
+		var log_value = log(automation_y_value) / log(10)
+		
+		var t = inverse_lerp(log_min, log_max, log_value)
+		
+		t = 1.0 - t
+		
+		point_y_pos = lerp(0.0, self.size.y, t)
+	return point_y_pos
 
 func convert_to_automation_value(screen_position: Vector2) -> Vector2:
 	var point_x_value = ((100 / zoom_factor) * (screen_position.x / self.size.x)) + zoomed_offset
-	var point_y_value = (((self.size.y - screen_position.y) / self.size.y) * (max_y - min_y)) + min_y
+	var point_y_value
 	
+	if !exponential:
+		point_y_value = (((self.size.y - screen_position.y) / self.size.y) * (max_y - min_y)) + min_y
+	else:
+		#normalise value from 0 to 1 and invert to match inverted coordinate system
+		var t = clamp(screen_position.y / self.size.y, 0.0, 1.0)
+		t = 1.0 - t
+		var log_min = log(min_y) / log(10)
+		var log_max = log(max_y) / log(10)
+		var log_val = lerp(log_min, log_max, t)
+		point_y_value = pow(10.0, log_val)
+		
 	return Vector2(point_x_value, point_y_value)
-	
 	
 func sort_points(a, b):
 	return a.x < b.x
