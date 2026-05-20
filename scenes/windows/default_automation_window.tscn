@@ -13,11 +13,23 @@ size = Vector2i(700, 500)
 min_size = Vector2i(700, 500)
 script = ExtResource("1_6moma")
 
+[node name="ColorRect" type="ColorRect" parent="."]
+visible = false
+offset_left = -6.0
+offset_top = -8.0
+offset_right = 715.0
+offset_bottom = 30.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+color = Color(0.0588235, 0.0588235, 0.0588235, 0.917647)
+
 [node name="TabContainer" type="TabContainer" parent="."]
 custom_minimum_size = Vector2(700, 501)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 1.0
+offset_bottom = 2.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
@@ -28,21 +40,9 @@ current_tab = 0
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="PanelContainer" type="PanelContainer" parent="TabContainer/Visual Editor"]
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Visual Editor"]
 layout_mode = 2
-size_flags_vertical = 3
-
-[node name="AutomationEditor" type="Control" parent="TabContainer/Visual Editor/PanelContainer"]
-custom_minimum_size = Vector2(0, 300)
-layout_mode = 2
-script = ExtResource("2_7tbcr")
-
-[node name="ColorRect" type="ColorRect" parent="TabContainer/Visual Editor/PanelContainer/AutomationEditor"]
-visible = false
-layout_mode = 0
-offset_right = 700.0
-offset_bottom = 300.0
-color = Color(0.907942, 0.907942, 0.907942, 0.447059)
+theme_override_constants/margin_top = 1
 
 [node name="EditorData" type="HBoxContainer" parent="TabContainer/Visual Editor"]
 layout_mode = 2
@@ -129,15 +129,26 @@ layout_mode = 2
 layout_mode = 2
 theme_override_constants/margin_left = 1
 
-[node name="HSlider" type="HSlider" parent="TabContainer/Visual Editor"]
+[node name="PanelContainer" type="PanelContainer" parent="TabContainer/Visual Editor"]
 layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AutomationEditor" type="Control" parent="TabContainer/Visual Editor/PanelContainer"]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+script = ExtResource("2_7tbcr")
+
+[node name="AutomationScrollBar" type="HScrollBar" parent="TabContainer/Visual Editor"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+page = 100.0
 
 [node name="Label" type="Label" parent="TabContainer/Visual Editor"]
 layout_mode = 2
 
 [node name="TempPadding" type="MarginContainer" parent="TabContainer/Visual Editor"]
 layout_mode = 2
-theme_override_constants/margin_top = 80
+theme_override_constants/margin_top = 63
 
 [node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
 visible = false
@@ -150,9 +161,9 @@ metadata/_tab_index = 1
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandVButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_v_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandHButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_h_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/SkewButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_skew_button_toggled"]
-[connection signal="gui_input" from="TabContainer/Visual Editor/EditorData/CurveButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_curve_button_gui_input"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/CurveButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_curve_button_toggled"]
 [connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_focus_exited"]
 [connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_text_submitted"]
 [connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_focus_exited"]
 [connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_text_submitted"]
+[connection signal="value_changed" from="TabContainer/Visual Editor/AutomationScrollBar" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_automation_scroll_bar_value_changed"]

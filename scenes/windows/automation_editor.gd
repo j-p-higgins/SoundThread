@@ -3,6 +3,7 @@ class_name AutomationEditor
 
 @onready var value_edit_x = $"../../EditorData/XEdit"
 @onready var value_edit_y = $"../../EditorData/YEdit"
+@onready var scroll_bar = $"../../AutomationScrollBar"
 
 var pencil_icon = load("res://theme/images/pencil_32.png")
 var pencil_icon_hidpi = load("res://theme/images/pencil_64.png")
@@ -96,11 +97,17 @@ func _gui_input(event):
 		
 		# zoom in
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-			zoom_automation(zoom_per_scroll, event.position.x)
+			if !event.ctrl_pressed:
+				zoom_automation(zoom_per_scroll, event.position.x)
+			else:
+				horizontal_scroll(10)
 			
 		# zoom out
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-			zoom_automation(zoom_per_scroll * -1, event.position.x)
+			if !event.ctrl_pressed:
+				zoom_automation(zoom_per_scroll * -1, event.position.x)
+			else:
+				horizontal_scroll(-10)
 			
 	elif event is InputEventMouseMotion:
 		var automation_value = convert_to_automation_value(event.position)
@@ -201,6 +208,13 @@ func zoom_automation(zoom_amount: float, zoom_screen_position: float) -> void:
 	
 	zoomed_offset = clamp(mouse_position_in_automation - (new_percentage_on_screen * zoom_screen_position), 0.0, 100 - new_percentage_on_screen)
 	
+	scroll_bar.page = 100 / zoom_factor
+	scroll_bar.value = zoomed_offset
+	queue_redraw()
+	
+func horizontal_scroll(amount: float) -> void:
+	zoomed_offset = clamp(zoomed_offset + (amount / zoom_factor), 0, 100 - (100 / zoom_factor))
+	scroll_bar.value = zoomed_offset
 	queue_redraw()
 	
 func add_remove_point(mouse_position: Vector2) -> void:
@@ -608,5 +622,6 @@ func _on_curve_button_toggled(toggled_on: bool) -> void:
 
 
 
-func _on_curve_button_gui_input(event: InputEvent) -> void:
-	pass # Replace with function body.
+func _on_automation_scroll_bar_value_changed(value: float) -> void:
+	zoomed_offset = value
+	queue_redraw()
