@@ -283,13 +283,19 @@ func select_points_in_drag_range() -> void:
 		
 func drag_automation_points(automation_value: Vector2) -> void:
 	set_default_cursor_shape(Control.CURSOR_DRAG)
-	var point_offset_amount = automation_value - mouse_down_value
+	var point_offset_x = clamp(automation_value.x, 0.0, 100.0) - mouse_down_value.x
+	var point_offset_y = value_to_normalised(clamp(automation_value.y, min_y, max_y)) - value_to_normalised(mouse_down_value.y)
+	
 	for index in selected_points:
 		if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
 			pass
 		else:
-			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_amount.x, 0.0001, 99.999)
-		automation_points[index].y = clamp(pre_edited_automation_points[index].y + point_offset_amount.y, min_y, max_y)
+			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_x, 0.0001, 99.999)
+			
+		var point_normalised = value_to_normalised(pre_edited_automation_points[index].y)
+		var new_y_value = clamp(point_normalised + point_offset_y, 0.0, 1.0)
+		
+		automation_points[index].y = normalised_to_value(new_y_value)
 		
 		
 func pencil_draw_automation(relative_x: float, automation_value: Vector2) -> void:
@@ -405,9 +411,7 @@ func draw_realtime_curve(mouse_value: Vector2) -> void:
 		var y_diff = mouse_down_value.y - mouse_value.y
 			
 		var start_normalised = value_to_normalised(mouse_down_value.y)
-		print(start_normalised)
 		var end_normalised = value_to_normalised(mouse_value.y)
-		print(end_normalised)
 		
 		for i in range(point_count):
 			var t = (float(i + 1) / int(point_count))
@@ -429,7 +433,6 @@ func draw_realtime_curve(mouse_value: Vector2) -> void:
 			var normalised_y = lerp(start_normalised, end_normalised, curved)
 			
 			var x = clamp(mouse_down_value.x + ((i + 1) * x_step), 0.01, 99.99)
-			#var y = clamp(mouse_down_value.y + (curved * (mouse_value.y - mouse_down_value.y)), min_y, max_y)
 			var y = clamp(normalised_to_value(normalised_y), min_y, max_y)
 			
 			automation_points.append(Vector2(x, y))
