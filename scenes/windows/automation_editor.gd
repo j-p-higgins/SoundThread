@@ -30,6 +30,7 @@ var exponential: bool
 var automation_points = []
 var selected_points = []
 var pre_edited_automation_points = []
+var pre_edited_selected_points = []
 
 var selection_start = null
 var selection_end = null
@@ -78,6 +79,7 @@ func _gui_input(event):
 			pre_edited_automation_points = automation_points.duplicate()
 			if !event.alt_pressed:
 				select_points(automation_value, event.shift_pressed)
+				pre_edited_selected_points = selected_points.duplicate()
 			predraw_automation_count = automation_points.size() - 1
 			previous_horizontal_mouse_direction = null
 			previous_vertical_mouse_direction = null
@@ -89,6 +91,7 @@ func _gui_input(event):
 			previous_horizontal_mouse_direction = null
 			previous_vertical_mouse_direction = null
 			set_default_cursor_shape(Control.CURSOR_ARROW)
+			#clean_up_duplicate_values()
 			select_points_in_drag_range()
 			
 		# edit point value
@@ -283,19 +286,56 @@ func select_points_in_drag_range() -> void:
 		
 func drag_automation_points(automation_value: Vector2) -> void:
 	set_default_cursor_shape(Control.CURSOR_DRAG)
-	var point_offset_x = clamp(automation_value.x, 0.0, 100.0) - mouse_down_value.x
+
+	#reset to state before drag to allow overwritten points to return if automation moves back out of their range
+	selected_points = pre_edited_selected_points.duplicate()
+	automation_points = pre_edited_automation_points.duplicate()
+	
+	#get all selected values and sort them
+	var selected_values = []
+	for i in selected_points:
+		selected_values.append(automation_points[i])
+	
+	selected_values.sort_custom(sort_points)
+
+	#find max movement amount for selected points to stop points being smooshed on the sides
+	var min_value = selected_values[0].x
+	var max_value = selected_values[selected_values.size() - 1].x
+	var max_negative_x = (min_value * -1) + 0.01
+	var max_positive_x = 99.99 - max_value
+	
+	#calculate offset
+	var point_offset_x = clamp(automation_value.x - mouse_down_value.x, max_negative_x, max_positive_x)
 	var point_offset_y = value_to_normalised(clamp(automation_value.y, min_y, max_y)) - value_to_normalised(mouse_down_value.y)
 	
+		
+	#move points
 	for index in selected_points:
 		if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
 			pass
 		else:
-			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_x, 0.0001, 99.999)
+			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_x, 0.01, 99.99)
 			
 		var point_normalised = value_to_normalised(pre_edited_automation_points[index].y)
 		var new_y_value = clamp(point_normalised + point_offset_y, 0.0, 1.0)
 		
 		automation_points[index].y = normalised_to_value(new_y_value)
+		
+	if selected_points.size() > 1:
+		#adjust min and max point ranges for movement
+		min_value += point_offset_x
+		max_value += point_offset_x
+		
+		#remove any overlapping points in selected range and adjust indexes of selected points to reflect deletion
+		for i in range(automation_points.size() - 1, -1 , -1):
+			if !selected_points.has(i):
+				var point = automation_points[i].x
+				if point >= min_value and point <= max_value:
+					for index in range(selected_points.size()):
+						if selected_points[index] > i:
+							selected_points[index] -= 1
+							
+					automation_points.remove_at(i)
 		
 		
 func pencil_draw_automation(relative_x: float, automation_value: Vector2) -> void:
@@ -338,8 +378,11 @@ func scale_vertically(automation_value: Vector2, points_to_scale: Array) -> void
 		automation_points[point].y = clamp(scaled_y, min_y, max_y)
 
 func scale_horizontally(automation_value: Vector2, points_to_scale: Array) -> void:
-	var multiplier = 1 + (((automation_value.x - mouse_down_value.x) / 100) * 2)
-
+	var multiplier = 1 + (((automation_value.x - mouse_down_value.x) / 100) * (2 * zoom_factor))
+	
+	if multiplier <= 0.01 and multiplier >= -0.01:
+		return
+		
 	for point in points_to_scale:
 		if automation_points[point].x == 0 or automation_points[point].x == 100:
 			continue
@@ -352,7 +395,7 @@ func scale_horizontally(automation_value: Vector2, points_to_scale: Array) -> vo
 		automation_points[point].x = clamp(scaled_x, 0.001, 99.999)
 		
 func skew_points(automation_value: Vector2, points_to_scale: Array) -> void:
-	var multiplier = ((automation_value.x - mouse_down_value.x) / 100) * 2
+	var multiplier = ((automation_value.x - mouse_down_value.x) / 100) * (4 * zoom_factor)
 	
 	for point in points_to_scale:
 		var original_x = pre_edited_automation_points[point].x
@@ -391,6 +434,7 @@ func fill_coordinate_boxes(automation_value: Vector2) -> void:
 			value_edit_y.text = "%.3f" % selected_point_value.y
 		
 func draw_realtime_curve(mouse_value: Vector2) -> void:
+	selected_points.clear()
 	var point_count = (abs(mouse_value.x - mouse_down_value.x) / 2) * zoom_factor
 	
 	#overwrite previous curve
@@ -679,3 +723,16 @@ func _on_curve_button_toggled(toggled_on: bool) -> void:
 func _on_automation_scroll_bar_value_changed(value: float) -> void:
 	zoomed_offset = value
 	queue_redraw()
+
+#func clean_up_duplicate_values() -> void:
+	#var seen_x = []
+	#for i in range(automation_points.size() -1, -1, -1):
+		#var x_value = automation_points[i].x
+		#if seen_x.has(x_value):
+			#if selected_points.has(i):
+				#selected_points.erase(i)
+			#automation_points.remove_at(i)
+		#else:
+			#seen_x.append(x_value)
+	#queue_redraw()
+			#
