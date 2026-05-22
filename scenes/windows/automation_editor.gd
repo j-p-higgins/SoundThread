@@ -19,6 +19,7 @@ var s_curve_icon = load("res://theme/images/s_curve_button.png")
 const max_zoom = 10.0
 const zoom_per_scroll = 0.5
 const point_size = 10
+const minimum_point_spacing = 0.1
 
 var zoom_factor = 1.0
 var zoomed_offset = 0.0
@@ -91,7 +92,7 @@ func _gui_input(event):
 			previous_horizontal_mouse_direction = null
 			previous_vertical_mouse_direction = null
 			set_default_cursor_shape(Control.CURSOR_ARROW)
-			#clean_up_duplicate_values()
+			clean_up_duplicate_values()
 			select_points_in_drag_range()
 			
 		# edit point value
@@ -301,8 +302,8 @@ func drag_automation_points(automation_value: Vector2) -> void:
 	#find max movement amount for selected points to stop points being smooshed on the sides
 	var min_value = selected_values[0].x
 	var max_value = selected_values[selected_values.size() - 1].x
-	var max_negative_x = (min_value * -1) + 0.01
-	var max_positive_x = 99.99 - max_value
+	var max_negative_x = (min_value * -1) + minimum_point_spacing
+	var max_positive_x = (100 - minimum_point_spacing) - max_value
 	
 	#calculate offset
 	var point_offset_x = clamp(automation_value.x - mouse_down_value.x, max_negative_x, max_positive_x)
@@ -314,7 +315,7 @@ func drag_automation_points(automation_value: Vector2) -> void:
 		if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
 			pass
 		else:
-			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_x, 0.01, 99.99)
+			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_x, minimum_point_spacing, (100 - minimum_point_spacing))
 			
 		var point_normalised = value_to_normalised(pre_edited_automation_points[index].y)
 		var new_y_value = clamp(point_normalised + point_offset_y, 0.0, 1.0)
@@ -351,7 +352,7 @@ func pencil_draw_automation(relative_x: float, automation_value: Vector2) -> voi
 	
 	previous_horizontal_mouse_direction = current_mouse_direction
 	
-	if automation_value.x >= 0.01 and automation_value.x <= 99.99:
+	if automation_value.x >= minimum_point_spacing and automation_value.x <= (100 - minimum_point_spacing):
 		for i in range(predraw_automation_count, -1, -1):
 			var point = automation_points[i]
 			if point.x >= min(selection_start, automation_value.x) and point.x <= max(selection_start, automation_value.x):
@@ -392,7 +393,7 @@ func scale_horizontally(automation_value: Vector2, points_to_scale: Array) -> vo
 		
 		var scaled_x = mouse_down_value.x + (distance_from_centre * multiplier)
 		
-		automation_points[point].x = clamp(scaled_x, 0.001, 99.999)
+		automation_points[point].x = clamp(scaled_x, minimum_point_spacing, (100 - minimum_point_spacing))
 		
 func skew_points(automation_value: Vector2, points_to_scale: Array) -> void:
 	var multiplier = ((automation_value.x - mouse_down_value.x) / 100) * (4 * zoom_factor)
@@ -476,7 +477,7 @@ func draw_realtime_curve(mouse_value: Vector2) -> void:
 			
 			var normalised_y = lerp(start_normalised, end_normalised, curved)
 			
-			var x = clamp(mouse_down_value.x + ((i + 1) * x_step), 0.01, 99.99)
+			var x = clamp(mouse_down_value.x + ((i + 1) * x_step), minimum_point_spacing, (100 - minimum_point_spacing))
 			var y = clamp(normalised_to_value(normalised_y), min_y, max_y)
 			
 			automation_points.append(Vector2(x, y))
@@ -641,7 +642,7 @@ func _on_x_edit_text_submitted(new_text: String) -> void:
 	if new_text.is_valid_float():
 		var new_val = new_text.to_float()
 		
-		if new_val < 0.0001 or new_val > 99.9999:
+		if new_val < minimum_point_spacing or new_val > (100 - minimum_point_spacing):
 			value_edit_x.text = "%.3f" % old_value.x
 		else:
 			automation_points[selected_points[0]].x = new_val
@@ -724,15 +725,28 @@ func _on_automation_scroll_bar_value_changed(value: float) -> void:
 	zoomed_offset = value
 	queue_redraw()
 
-#func clean_up_duplicate_values() -> void:
-	#var seen_x = []
-	#for i in range(automation_points.size() -1, -1, -1):
-		#var x_value = automation_points[i].x
-		#if seen_x.has(x_value):
-			#if selected_points.has(i):
-				#selected_points.erase(i)
-			#automation_points.remove_at(i)
-		#else:
-			#seen_x.append(x_value)
-	#queue_redraw()
-			#
+func clean_up_duplicate_values() -> void:
+	var seen_x = [0.0, 100.0]
+	var seen = false
+	
+	for i in range(automation_points.size() -1, -1, -1):
+		var x_value = automation_points[i].x
+		if x_value != 0.0 and x_value != 100.0:
+			for seen_value in seen_x:
+				if abs(x_value - seen_value) < minimum_point_spacing - 0.01:
+					seen = true
+					break
+			if seen:
+				if selected_points.has(i):
+					selected_points.erase(i)
+				for index in range(selected_points.size()):
+					if selected_points[index] > i:
+						selected_points[index] -= 1
+				automation_points.remove_at(i)
+			else:
+				seen_x.append(x_value)
+		
+		seen = false
+
+	queue_redraw()
+			
