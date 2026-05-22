@@ -5,6 +5,14 @@ class_name AutomationEditor
 @onready var value_edit_y = $"../../EditorData/YEdit"
 @onready var scroll_bar = $"../../AutomationScrollBar"
 
+@onready var pencil_button = $"../../EditorData/PencilButton"
+@onready var erase_button = $"../../EditorData/EraseButton"
+@onready var expand_v_button = $"../../EditorData/ExpandVButton"
+@onready var expand_h_button = $"../../EditorData/ExpandHButton"
+@onready var skew_button = $"../../EditorData/SkewButton"
+@onready var curve_button = $"../../EditorData/CurveButton"
+
+
 var pencil_icon = load("res://theme/images/pencil_32.png")
 var pencil_icon_hidpi = load("res://theme/images/pencil_64.png")
 var eraser_icon = load("res://theme/images/eraser_32.png")
@@ -177,6 +185,28 @@ func _gui_input(event):
 			change_cursor()
 		elif event.keycode == KEY_ALT and not event.pressed:
 			set_default_cursor_shape(Control.CURSOR_ARROW)
+		elif event.keycode == 65 and event.ctrl_pressed and event.pressed:
+			selected_points.clear()
+			for i in range(automation_points.size()):
+				selected_points.append(i)
+			queue_redraw()
+		elif event.pressed:
+			match event.keycode:
+				49:
+					pencil_button.button_pressed = true
+				50:
+					erase_button.button_pressed = true
+				51:
+					expand_v_button.button_pressed = true
+				52:
+					expand_h_button.button_pressed = true
+				53:
+					skew_button.button_pressed = true
+				54:
+					if !curve_button.button_pressed:
+						curve_button.button_pressed = true
+					else:
+						_on_curve_button_toggled(true)
 
 func change_cursor() -> void:
 	match alt_tool:
