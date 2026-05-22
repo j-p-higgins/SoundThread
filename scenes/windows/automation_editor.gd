@@ -315,7 +315,15 @@ func drag_automation_points(automation_value: Vector2) -> void:
 		if automation_points[index].x == 0.0 or automation_points[index].x == 100.0:
 			pass
 		else:
-			automation_points[index].x = clamp(pre_edited_automation_points[index].x + point_offset_x, minimum_point_spacing, (100 - minimum_point_spacing))
+			var new_x_value = clamp(pre_edited_automation_points[index].x + point_offset_x, minimum_point_spacing, (100 - minimum_point_spacing))
+			if selected_points.size() == 1:
+				var existing_point_in_range = check_for_close_points(new_x_value, selected_points[0])
+				if existing_point_in_range:
+					if point_offset_x > 0:
+						new_x_value = clamp(new_x_value + 0.2, minimum_point_spacing, (100 - minimum_point_spacing))
+					else:
+						new_x_value = clamp(new_x_value - 0.2, minimum_point_spacing, (100 - minimum_point_spacing))
+			automation_points[index].x = new_x_value
 			
 		var point_normalised = value_to_normalised(pre_edited_automation_points[index].y)
 		var new_y_value = clamp(point_normalised + point_offset_y, 0.0, 1.0)
@@ -750,3 +758,11 @@ func clean_up_duplicate_values() -> void:
 
 	queue_redraw()
 			
+
+func check_for_close_points(x_value: float, point_index: int) -> bool:
+	for i in range(automation_points.size()):
+		if i != point_index:
+			var existing_x = automation_points[i].x
+			if abs(x_value - existing_x) < minimum_point_spacing:
+				return true
+	return false
