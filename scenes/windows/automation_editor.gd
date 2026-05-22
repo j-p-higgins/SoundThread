@@ -474,6 +474,7 @@ func fill_coordinate_boxes(automation_value: Vector2) -> void:
 		
 func draw_realtime_curve(mouse_value: Vector2) -> void:
 	selected_points.clear()
+	mouse_value = Vector2(clamp(mouse_value.x, 0.0, 100.0), mouse_value.y)
 	var point_count = (abs(mouse_value.x - mouse_down_value.x) / 2) * zoom_factor
 	
 	#overwrite previous curve
@@ -515,10 +516,15 @@ func draw_realtime_curve(mouse_value: Vector2) -> void:
 			
 			var normalised_y = lerp(start_normalised, end_normalised, curved)
 			
-			var x = clamp(mouse_down_value.x + ((i + 1) * x_step), minimum_point_spacing, (100 - minimum_point_spacing))
+			var x = mouse_down_value.x + ((i + 1) * x_step)
 			var y = clamp(normalised_to_value(normalised_y), min_y, max_y)
 			
-			automation_points.append(Vector2(x, y))
+			if x <= minimum_point_spacing:
+				automation_points[0].y = y
+			elif x >= 100 - minimum_point_spacing:
+				automation_points[1].y = y
+			else:
+				automation_points.append(Vector2(x, y))
 
 func value_to_normalised(value: float) -> float:
 	if exponential:
