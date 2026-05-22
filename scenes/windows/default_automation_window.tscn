@@ -144,6 +144,7 @@ layout_mode = 2
 page = 100.0
 
 [node name="Label" type="Label" parent="TabContainer/Visual Editor"]
+visible = false
 layout_mode = 2
 
 [node name="TempPadding" type="MarginContainer" parent="TabContainer/Visual Editor"]

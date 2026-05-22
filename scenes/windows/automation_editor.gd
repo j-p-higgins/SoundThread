@@ -537,6 +537,17 @@ func _draw():
 		draw_line(Vector2(position, 0), Vector2(position, self.size.y), Color(1, 1, 1, 0.1), 1)
 		draw_string(default_font, Vector2(position + 8, 16), str(i * 10) + "%", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.2))
 	
+	if zoom_factor >= 5:
+		for i in range(10):
+			var position = convert_x_to_screen_position((i * 10) + 5)
+			if position < 0:
+				pass
+			elif position < self.size.x:
+				pass
+				
+			draw_line(Vector2(position, 0), Vector2(position, self.size.y), Color(1, 1, 1, 0.1), 1)
+			draw_string(default_font, Vector2(position + 8, 16), str((i * 10) + 5) + "%", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.2))
+	
 	
 	#sort points
 	var sorted = []
