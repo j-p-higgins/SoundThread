@@ -3,6 +3,7 @@ extends GraphNode
 @export var min_gap: float = 0.5  # editable value in inspector for the minimum gap between min and max
 var undo_redo: UndoRedo
 var button_states = {}
+var cache_button: Button
 signal open_help
 signal inlet_removed
 signal node_moved
@@ -39,6 +40,8 @@ func _ready() -> void:
 	cache_btn.text = "▶"
 	cache_btn.tooltip_text = "Preview cached output (run thread first)"
 	cache_btn.connect("pressed", Callable(self, "_play_cache"))
+	cache_btn.visible = false
+	cache_button = cache_btn
 	titlebar.add_child(cache_btn)
 	
 	if has_meta("allow_bypass") and get_meta("allow_bypass"):
@@ -198,6 +201,10 @@ func set_button_value(value, button) -> void:
 		button.set_pressed_no_signal(value)
 		
 	button_states[button] = value
+
+func set_cache_button_visible(v: bool) -> void:
+	if is_instance_valid(cache_button):
+		cache_button.visible = v
 
 func _bypass_node() -> void:
 	if has_meta("bypassed") and get_meta("bypassed"):

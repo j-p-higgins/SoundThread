@@ -665,7 +665,20 @@ func run_thread_with_branches():
 
 				# Increase the process step count
 				process_count += 1
-			progress_bar.value += progress_step
+			if node.has_method("set_cache_button_visible"):
+				var has_cache_meta = node.has_meta("last_cache_hash") and node.has_meta("last_cache_type")
+				if has_cache_meta:
+					var h = node.get_meta("last_cache_hash")
+					var t = node.get_meta("last_cache_type")
+					var cache_present = false
+					if t == "wav":
+						cache_present = _cache_exists(h, ".wav")
+					elif t == "ana":
+						cache_present = _cache_exists(h, ".ana")
+					elif t == "pvoc_stereo":
+						cache_present = _cache_exists(h, "_0.ana") and _cache_exists(h, "_1.ana")
+					node.set_cache_button_visible(cache_present)
+		progress_bar.value += progress_step
 	# FINAL OUTPUT STAGE
 
 	# Collect all nodes that are connected to the outputfile node
@@ -1726,6 +1739,10 @@ func _notification(what):
 		clear_cache()
 
 func clear_cache() -> void:
+	if is_instance_valid(graph_edit):
+		for child in graph_edit.get_children():
+			if child is GraphNode and child.has_method("set_cache_button_visible"):
+				child.set_cache_button_visible(false)
 	var da = DirAccess.open(CACHE_DIR)
 	if da == null:
 		return
