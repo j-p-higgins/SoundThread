@@ -1681,6 +1681,7 @@ func play_node_cache(node: Node) -> void:
 			console_window.popup_centered()
 		return
 
+	process_successful = true
 	var hash = node.get_meta("last_cache_hash")
 	var cache_type = node.get_meta("last_cache_type")
 
@@ -1703,6 +1704,9 @@ func play_node_cache(node: Node) -> void:
 			return
 		var abs_ana = ProjectSettings.globalize_path(cached_ana)
 		var temp_wav = ProjectSettings.globalize_path(CACHE_DIR + "_preview.wav")
+		var da = DirAccess.open(CACHE_DIR)
+		if da and FileAccess.file_exists(CACHE_DIR + "_preview.wav"):
+			da.remove("_preview.wav")
 		log_console("Resynthesising preview for: " + node.title, true)
 		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_ana, temp_wav])
 		if process_successful:
@@ -1721,6 +1725,11 @@ func play_node_cache(node: Node) -> void:
 		var temp_left = ProjectSettings.globalize_path(CACHE_DIR + "_preview_left.wav")
 		var temp_right = ProjectSettings.globalize_path(CACHE_DIR + "_preview_right.wav")
 		var temp_stereo = ProjectSettings.globalize_path(CACHE_DIR + "_preview.wav")
+		var da = DirAccess.open(CACHE_DIR)
+		if da:
+			for fname in ["_preview_left.wav", "_preview_right.wav", "_preview.wav"]:
+				if FileAccess.file_exists(CACHE_DIR + fname):
+					da.remove(fname)
 		log_console("Resynthesising preview for: " + node.title + " (stereo)", true)
 		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_left, temp_left])
 		if not process_successful:
