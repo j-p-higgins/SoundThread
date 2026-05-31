@@ -390,6 +390,8 @@ func run_thread_with_branches():
 				var slider_data = _get_slider_values_ordered(node)
 				var node_hash = _compute_node_hash([], slider_data, str(node.get_meta("command")))
 				node_hashes[node_name] = node_hash
+				node.set_meta("last_cache_hash", node_hash)
+				node.set_meta("last_cache_type", "wav")
 				var makeprocess = make_process(node, process_count, [], slider_data)
 				var output_file = makeprocess[1]
 				var output_ext = "." + output_file.get_extension()
@@ -462,8 +464,10 @@ func run_thread_with_branches():
 				input_hashes.append(node_hashes.get(str(conn["from_node"]), ""))
 			var node_hash = _compute_node_hash(input_hashes, slider_data, str(node.get_meta("command")))
 			node_hashes[node_name] = node_hash
+			node.set_meta("last_cache_hash", node_hash)
 
 			if node.get_slot_type_right(0) == 1: #detect if process outputs pvoc data
+				node.set_meta("last_cache_type", "pvoc_stereo")
 				if is_pvoc_stereo(current_infiles): #check if infiles contain an array meaning at least one input pvoc process has be processed in dual mono mode
 					var left_pvoc_file = "%s_%d.ana" % [Global.outfile.get_basename(), process_count]
 					var right_pvoc_file = "%s_%d.ana" % [Global.outfile.get_basename(), process_count + 1]
@@ -529,6 +533,7 @@ func run_thread_with_branches():
 
 					else:
 						#input file is mono run through process
+						node.set_meta("last_cache_type", "ana")
 						var makeprocess = make_process(node, process_count, current_infiles.values(), slider_data)
 						var output_file = makeprocess[1]
 						if _cache_exists(node_hash, ".ana"):
@@ -551,6 +556,7 @@ func run_thread_with_branches():
 
 			else:
 				#Process outputs audio
+				node.set_meta("last_cache_type", "wav")
 				#check if this is the last pvoc process in a stereo processing chain and check if infile is an array meaning that the last pvoc process was run in dual mono mode
 				if node.get_meta("command") == "pvoc_synth" and is_pvoc_stereo(current_infiles):
 					if _cache_exists(node_hash, ".wav"):
@@ -1647,7 +1653,89 @@ func _dfs_cycle(node: String, graph: Dictionary, visited: Dictionary, stack: Dic
 	stack.erase(node)
 	return false
 
+# --- Cache preview playback ---
+
+func play_node_cache(node: Node) -> void:
+	if process_running:
+		log_console("Cannot preview while thread is running.", true)
+		if not console_window.visible:
+			console_window.popup_centered()
+		return
+
+	if not node.has_meta("last_cache_hash") or not node.has_meta("last_cache_type"):
+		log_console("No cached output for \"" + node.title + "\". Run the thread first.", true)
+		if not console_window.visible:
+			console_window.popup_centered()
+		return
+
+	var hash = node.get_meta("last_cache_hash")
+	var cache_type = node.get_meta("last_cache_type")
+
+	if cache_type == "wav":
+		var cached = _cache_file_path(hash, ".wav")
+		if not FileAccess.file_exists(cached):
+			log_console("Cache expired for \"" + node.title + "\". Run the thread again.", true)
+			if not console_window.visible:
+				console_window.popup_centered()
+			return
+		log_console("Playing cached output for: " + node.title, true)
+		control_script.output_audio_player.play_outfile(ProjectSettings.globalize_path(cached))
+
+	elif cache_type == "ana":
+		var cached_ana = _cache_file_path(hash, ".ana")
+		if not FileAccess.file_exists(cached_ana):
+			log_console("Cache expired for \"" + node.title + "\". Run the thread again.", true)
+			if not console_window.visible:
+				console_window.popup_centered()
+			return
+		var abs_ana = ProjectSettings.globalize_path(cached_ana)
+		var temp_wav = ProjectSettings.globalize_path(CACHE_DIR + "_preview.wav")
+		log_console("Resynthesising preview for: " + node.title, true)
+		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_ana, temp_wav])
+		if process_successful:
+			control_script.output_audio_player.play_outfile(temp_wav)
+
+	elif cache_type == "pvoc_stereo":
+		var cached_left = _cache_file_path(hash, "_0.ana")
+		var cached_right = _cache_file_path(hash, "_1.ana")
+		if not FileAccess.file_exists(cached_left) or not FileAccess.file_exists(cached_right):
+			log_console("Cache expired for \"" + node.title + "\". Run the thread again.", true)
+			if not console_window.visible:
+				console_window.popup_centered()
+			return
+		var abs_left = ProjectSettings.globalize_path(cached_left)
+		var abs_right = ProjectSettings.globalize_path(cached_right)
+		var temp_left = ProjectSettings.globalize_path(CACHE_DIR + "_preview_left.wav")
+		var temp_right = ProjectSettings.globalize_path(CACHE_DIR + "_preview_right.wav")
+		var temp_stereo = ProjectSettings.globalize_path(CACHE_DIR + "_preview.wav")
+		log_console("Resynthesising preview for: " + node.title + " (stereo)", true)
+		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_left, temp_left])
+		if not process_successful:
+			return
+		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_right, temp_right])
+		if not process_successful:
+			return
+		await run_command(control_script.cdpprogs_location + "/submix", ["interleave", temp_left, temp_right, temp_stereo])
+		if process_successful:
+			control_script.output_audio_player.play_outfile(temp_stereo)
+
 # --- Cache helpers ---
+
+func _notification(what):
+	if what == NOTIFICATION_EXIT_TREE:
+		clear_cache()
+
+func clear_cache() -> void:
+	var da = DirAccess.open(CACHE_DIR)
+	if da == null:
+		return
+	da.list_dir_begin()
+	var fname = da.get_next()
+	while fname != "":
+		if not da.current_is_dir():
+			da.remove(fname)
+		fname = da.get_next()
+	da.list_dir_end()
 
 func _ensure_cache_dir() -> void:
 	var da = DirAccess.open("user://")
