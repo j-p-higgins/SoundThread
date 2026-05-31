@@ -1,4 +1,5 @@
 extends Node
+const CACHE_DIR = "user://soundthread_cache/"
 var control_script
 
 var progress_label
@@ -34,6 +35,8 @@ func init(main_node: Node, progresswindow: Window, progresslabel: Label, progres
 func run_thread_with_branches():
 	process_cancelled = false
 	process_successful = true
+	_ensure_cache_dir()
+	var node_hashes = {}
 	progress_bar.value = 0
 	progress_label.text = "Initialising Inputs"
 	console_window.find_child("KillProcess").disabled = false
@@ -362,27 +365,47 @@ func run_thread_with_branches():
 						return
 					else:
 						progress_label.text = "Trimming input audio"
-					await run_command(control_script.cdpprogs_location + "/sfedit", ["cut", "1", loadedfile, "%s_%d_input_trim.wav" % [Global.outfile, process_count], str(start), str(end)])
-					
-					output_files[node_name] =  "%s_%d_input_trim.wav" % [Global.outfile, process_count]
-					
-					# Mark trimmed file for cleanup if needed
+					var trim_output = "%s_%d_input_trim.wav" % [Global.outfile, process_count]
+					var src_hash = _hash_source_file(loadedfile)
+					var trim_node_hash = _hash_string("sfedit|cut|1|" + src_hash + "|" + str(start) + "|" + str(end))
+					node_hashes[node_name] = trim_node_hash
+					if _cache_exists(trim_node_hash, ".wav"):
+						log_console("Cache hit: " + node.get_title() + " (trim)", true)
+						_copy_from_cache(trim_node_hash, ".wav", trim_output)
+					else:
+						await run_command(control_script.cdpprogs_location + "/sfedit", ["cut", "1", loadedfile, trim_output, str(start), str(end)])
+						if process_successful:
+							_copy_to_cache(trim_output, trim_node_hash, ".wav")
+					output_files[node_name] = trim_output
 					if control_script.delete_intermediate_outputs:
-						intermediate_files.append("%s_%d_input_trim.wav" % [Global.outfile, process_count])
+						intermediate_files.append(trim_output)
 					progress_bar.value += progress_step
 				else:
 					#if trim not enabled pass the loaded file
-					output_files[node_name] =  loadedfile
-					
+					output_files[node_name] = loadedfile
+					node_hashes[node_name] = _hash_source_file(loadedfile)
+
 				process_count += 1
 			else: #not an audio file must be synthesis
 				var slider_data = _get_slider_values_ordered(node)
+				var node_hash = _compute_node_hash([], slider_data, str(node.get_meta("command")))
+				node_hashes[node_name] = node_hash
+				node.set_meta("last_cache_hash", node_hash)
+				node.set_meta("last_cache_type", "wav")
 				var makeprocess = make_process(node, process_count, [], slider_data)
-				# run the command
-				await run_command(makeprocess[0], makeprocess[3])
-				await get_tree().process_frame
 				var output_file = makeprocess[1]
-				
+				var output_ext = "." + output_file.get_extension()
+				if _cache_exists(node_hash, output_ext):
+					log_console("Cache hit: " + node.get_title(), true)
+					_copy_from_cache(node_hash, output_ext, output_file)
+					await get_tree().process_frame
+				else:
+					# run the command
+					await run_command(makeprocess[0], makeprocess[3])
+					await get_tree().process_frame
+					if process_successful:
+						_copy_to_cache(output_file, node_hash, output_ext)
+
 				#check if bitdepth matches other files in thread and convert if needed
 				var soundfile_properties = get_soundfile_properties(output_file)
 				if processing_bit_depth != classify_format(soundfile_properties["format"], soundfile_properties["bitdepth"]):
@@ -402,11 +425,15 @@ func run_thread_with_branches():
 					for file in makeprocess[2]:
 						breakfiles.append(file)
 					intermediate_files.append(output_file)
-					
+
 				process_count += 1
 				
 		elif node.has_meta("bypassed") and node.get_meta("bypassed"):
-			
+			var bypass_input_hashes = []
+			for conn in input_connections:
+				bypass_input_hashes.append(node_hashes.get(str(conn["from_node"]), ""))
+			node_hashes[node_name] = _hash_string(str(bypass_input_hashes))
+
 			var bypassed_inputs = current_infiles.values()
 			
 			#check if node is bypassed and skip processing
@@ -432,65 +459,93 @@ func run_thread_with_branches():
 		else:
 			# Build the command for the current node's audio processing
 			var slider_data = _get_slider_values_ordered(node)
-			
-			if node.get_slot_type_right(0) == 1: #detect if process outputs pvoc data
-				if is_pvoc_stereo(current_infiles): #check if infiles contain an array meaning at least one input pvoc process has be processed in dual mono mode
-					var split_files = await process_dual_mono_pvoc(current_infiles, node, process_count, slider_data)
-					var pvoc_stereo_files = split_files[0]
-								
-					# Mark file for cleanup if needed
-					if control_script.delete_intermediate_outputs:
-						for file in split_files[1]:
-							breakfiles.append(file)
-						for file in pvoc_stereo_files:
-							intermediate_files.append(file)
-							
-					process_count += 1
-						
-					output_files[node_name] = pvoc_stereo_files
-				else:
-					var input_stereo = is_stereo(current_infiles.values()[0])
-					if input_stereo == true: 
-						#audio file is stereo and needs to be split for pvoc processing
-						var pvoc_stereo_files = []
+			var input_hashes = []
+			for conn in input_connections:
+				input_hashes.append(node_hashes.get(str(conn["from_node"]), ""))
+			var node_hash = _compute_node_hash(input_hashes, slider_data, str(node.get_meta("command")))
+			node_hashes[node_name] = node_hash
+			node.set_meta("last_cache_hash", node_hash)
 
-						##Split stereo to c1/c2 and process
-						var split_files = await stereo_split_and_process(current_infiles.values(), node, process_count, slider_data)
-						pvoc_stereo_files = split_files[0]
-							
-						# Mark file for cleanup if needed
+			if node.get_slot_type_right(0) == 1: #detect if process outputs pvoc data
+				node.set_meta("last_cache_type", "pvoc_stereo")
+				if is_pvoc_stereo(current_infiles): #check if infiles contain an array meaning at least one input pvoc process has be processed in dual mono mode
+					var left_pvoc_file = "%s_%d.ana" % [Global.outfile.get_basename(), process_count]
+					var right_pvoc_file = "%s_%d.ana" % [Global.outfile.get_basename(), process_count + 1]
+					if _cache_exists(node_hash, "_0.ana") and _cache_exists(node_hash, "_1.ana"):
+						log_console("Cache hit: " + node.get_title(), true)
+						_copy_from_cache(node_hash, "_0.ana", left_pvoc_file)
+						_copy_from_cache(node_hash, "_1.ana", right_pvoc_file)
+						process_count += 1
+						output_files[node_name] = [left_pvoc_file, right_pvoc_file]
+						if control_script.delete_intermediate_outputs:
+							intermediate_files.append(left_pvoc_file)
+							intermediate_files.append(right_pvoc_file)
+						await get_tree().process_frame
+					else:
+						var split_files = await process_dual_mono_pvoc(current_infiles, node, process_count, slider_data)
+						var pvoc_stereo_files = split_files[0]
 						if control_script.delete_intermediate_outputs:
 							for file in split_files[1]:
 								breakfiles.append(file)
 							for file in pvoc_stereo_files:
 								intermediate_files.append(file)
-						
-						#Delete c1 and c2 because they can be in the wrong folder and if the same infile is used more than once
-						#with this stereo process CDP will throw errors in the console even though its fine
-						var files_to_delete = split_files[2] + split_files[3]
-						for file in files_to_delete:
-							if is_windows:
-								file = file.replace("/", "\\")
-							await run_command(delete_cmd, [file])
-						
-						#advance process count to match the advancement in the stereo_split_and_process function
 						process_count += 1
-						
-						# Store output file path for this node
+						if process_successful:
+							_copy_to_cache(pvoc_stereo_files[0], node_hash, "_0.ana")
+							_copy_to_cache(pvoc_stereo_files[1], node_hash, "_1.ana")
 						output_files[node_name] = pvoc_stereo_files
-						
-					else: 
+				else:
+					var input_stereo = is_stereo(current_infiles.values()[0])
+					if input_stereo == true:
+						#audio file is stereo and needs to be split for pvoc processing
+						var left_pvoc_file = "%s_%d.ana" % [Global.outfile.get_basename(), process_count]
+						var right_pvoc_file = "%s_%d.ana" % [Global.outfile.get_basename(), process_count + 1]
+						if _cache_exists(node_hash, "_0.ana") and _cache_exists(node_hash, "_1.ana"):
+							log_console("Cache hit: " + node.get_title(), true)
+							_copy_from_cache(node_hash, "_0.ana", left_pvoc_file)
+							_copy_from_cache(node_hash, "_1.ana", right_pvoc_file)
+							process_count += 1
+							output_files[node_name] = [left_pvoc_file, right_pvoc_file]
+							if control_script.delete_intermediate_outputs:
+								intermediate_files.append(left_pvoc_file)
+								intermediate_files.append(right_pvoc_file)
+							await get_tree().process_frame
+						else:
+							var pvoc_stereo_files = []
+							var split_files = await stereo_split_and_process(current_infiles.values(), node, process_count, slider_data)
+							pvoc_stereo_files = split_files[0]
+							if control_script.delete_intermediate_outputs:
+								for file in split_files[1]:
+									breakfiles.append(file)
+								for file in pvoc_stereo_files:
+									intermediate_files.append(file)
+							var files_to_delete = split_files[2] + split_files[3]
+							for file in files_to_delete:
+								if is_windows:
+									file = file.replace("/", "\\")
+								await run_command(delete_cmd, [file])
+							#advance process count to match the advancement in the stereo_split_and_process function
+							process_count += 1
+							if process_successful:
+								_copy_to_cache(pvoc_stereo_files[0], node_hash, "_0.ana")
+								_copy_to_cache(pvoc_stereo_files[1], node_hash, "_1.ana")
+							output_files[node_name] = pvoc_stereo_files
+
+					else:
 						#input file is mono run through process
+						node.set_meta("last_cache_type", "ana")
 						var makeprocess = make_process(node, process_count, current_infiles.values(), slider_data)
-						# run the command
-						await run_command(makeprocess[0], makeprocess[3])
-						await get_tree().process_frame
 						var output_file = makeprocess[1]
-
-						# Store output file path for this node
+						if _cache_exists(node_hash, ".ana"):
+							log_console("Cache hit: " + node.get_title(), true)
+							_copy_from_cache(node_hash, ".ana", output_file)
+							await get_tree().process_frame
+						else:
+							await run_command(makeprocess[0], makeprocess[3])
+							await get_tree().process_frame
+							if process_successful:
+								_copy_to_cache(output_file, node_hash, ".ana")
 						output_files[node_name] = output_file
-
-						# Mark file for cleanup if needed
 						if control_script.delete_intermediate_outputs:
 							for file in makeprocess[2]:
 								breakfiles.append(file)
@@ -498,33 +553,37 @@ func run_thread_with_branches():
 
 			# Increase the process step count
 				process_count += 1
-				
-			else: 
+
+			else:
 				#Process outputs audio
+				node.set_meta("last_cache_type", "wav")
 				#check if this is the last pvoc process in a stereo processing chain and check if infile is an array meaning that the last pvoc process was run in dual mono mode
 				if node.get_meta("command") == "pvoc_synth" and is_pvoc_stereo(current_infiles):
-					var split_files = await process_dual_mono_pvoc(current_infiles, node, process_count, slider_data)
-					var pvoc_stereo_files = split_files[0]
-								
-					# Mark file for cleanup if needed
-					if control_script.delete_intermediate_outputs:
-						for file in split_files[1]:
-							breakfiles.append(file)
-						for file in pvoc_stereo_files:
-							intermediate_files.append(file)
-							
-					process_count += 1
-						
-						
-					#interleave left and right
-					var output_file = Global.outfile.get_basename() + str(process_count) + "_interleaved.wav"
-					await run_command(control_script.cdpprogs_location + "/submix", ["interleave", pvoc_stereo_files[0], pvoc_stereo_files[1], output_file])
-					# Store output file path for this node
-					output_files[node_name] = output_file
-					
-					# Mark file for cleanup if needed
-					if control_script.delete_intermediate_outputs:
-						intermediate_files.append(output_file)
+					if _cache_exists(node_hash, ".wav"):
+						log_console("Cache hit: " + node.get_title(), true)
+						process_count += 1
+						var output_file = Global.outfile.get_basename() + str(process_count) + "_interleaved.wav"
+						_copy_from_cache(node_hash, ".wav", output_file)
+						output_files[node_name] = output_file
+						if control_script.delete_intermediate_outputs:
+							intermediate_files.append(output_file)
+						await get_tree().process_frame
+					else:
+						var split_files = await process_dual_mono_pvoc(current_infiles, node, process_count, slider_data)
+						var pvoc_stereo_files = split_files[0]
+						if control_script.delete_intermediate_outputs:
+							for file in split_files[1]:
+								breakfiles.append(file)
+							for file in pvoc_stereo_files:
+								intermediate_files.append(file)
+						process_count += 1
+						var output_file = Global.outfile.get_basename() + str(process_count) + "_interleaved.wav"
+						await run_command(control_script.cdpprogs_location + "/submix", ["interleave", pvoc_stereo_files[0], pvoc_stereo_files[1], output_file])
+						output_files[node_name] = output_file
+						if process_successful:
+							_copy_to_cache(output_file, node_hash, ".wav")
+						if control_script.delete_intermediate_outputs:
+							intermediate_files.append(output_file)
 				elif node.get_meta("command") == "preview":
 					var preview_audioplayer = node.get_child(1)
 					var preview_file = current_infiles.values()[0]
@@ -534,71 +593,71 @@ func run_thread_with_branches():
 				else:
 					#Detect if input file is mono or stereo
 					var input_stereo = is_stereo(current_infiles.values()[0])
-					#var input_stereo = true #bypassing stereo check just for testing need to reimplement
 					if input_stereo == true:
 						if node.get_meta("stereo_input") == true: #audio file is stereo and process is stereo, run file through process
-							#current_infile = current_infiles.values()
 							var makeprocess = make_process(node, process_count, current_infiles.values(), slider_data)
-							# run the command
-							await run_command(makeprocess[0], makeprocess[3])
-							await get_tree().process_frame
 							var output_file = makeprocess[1]
-							
-							# Store output file path for this node
+							if _cache_exists(node_hash, ".wav"):
+								log_console("Cache hit: " + node.get_title(), true)
+								_copy_from_cache(node_hash, ".wav", output_file)
+								await get_tree().process_frame
+							else:
+								await run_command(makeprocess[0], makeprocess[3])
+								await get_tree().process_frame
+								if process_successful:
+									_copy_to_cache(output_file, node_hash, ".wav")
 							output_files[node_name] = output_file
-
-							# Mark file for cleanup if needed
 							if control_script.delete_intermediate_outputs:
 								for file in makeprocess[2]:
 									breakfiles.append(file)
 								intermediate_files.append(output_file)
 
 						else: #audio file is stereo and process is mono, split stereo, process and recombine
-							##Split stereo to c1/c2 and process
-							var split_files = await stereo_split_and_process(current_infiles.values(), node, process_count, slider_data)
-							var dual_mono_output = split_files[0]
-								
-							# Mark file for cleanup if needed
-							if control_script.delete_intermediate_outputs:
-								for file in split_files[1]:
-									breakfiles.append(file)
-								for file in dual_mono_output:
-									intermediate_files.append(file)
-							
-							#Delete c1 and c2 because they can be in the wrong folder and if the same infile is used more than once
-							#with this stereo process CDP will throw errors in the console even though its fine
-							var files_to_delete = split_files[2] + split_files[3]
-							for file in files_to_delete:
-								if is_windows:
-									file = file.replace("/", "\\")
-								await run_command(delete_cmd, [file])
-							
-							#advance process count to match the advancement in the stereo_split_and_process function
-							process_count += 1
-							
-							
-							var output_file = Global.outfile.get_basename() + str(process_count) + "_interleaved.wav"
-							await run_command(control_script.cdpprogs_location + "/submix", ["interleave", dual_mono_output[0], dual_mono_output[1], output_file])
-							
-							# Store output file path for this node
-							output_files[node_name] = output_file
-
-							# Mark file for cleanup if needed
-							if control_script.delete_intermediate_outputs:
-								intermediate_files.append(output_file)
+							if _cache_exists(node_hash, ".wav"):
+								log_console("Cache hit: " + node.get_title(), true)
+								process_count += 1
+								var output_file = Global.outfile.get_basename() + str(process_count) + "_interleaved.wav"
+								_copy_from_cache(node_hash, ".wav", output_file)
+								output_files[node_name] = output_file
+								if control_script.delete_intermediate_outputs:
+									intermediate_files.append(output_file)
+								await get_tree().process_frame
+							else:
+								var split_files = await stereo_split_and_process(current_infiles.values(), node, process_count, slider_data)
+								var dual_mono_output = split_files[0]
+								if control_script.delete_intermediate_outputs:
+									for file in split_files[1]:
+										breakfiles.append(file)
+									for file in dual_mono_output:
+										intermediate_files.append(file)
+								var files_to_delete = split_files[2] + split_files[3]
+								for file in files_to_delete:
+									if is_windows:
+										file = file.replace("/", "\\")
+									await run_command(delete_cmd, [file])
+								#advance process count to match the advancement in the stereo_split_and_process function
+								process_count += 1
+								var output_file = Global.outfile.get_basename() + str(process_count) + "_interleaved.wav"
+								await run_command(control_script.cdpprogs_location + "/submix", ["interleave", dual_mono_output[0], dual_mono_output[1], output_file])
+								output_files[node_name] = output_file
+								if process_successful:
+									_copy_to_cache(output_file, node_hash, ".wav")
+								if control_script.delete_intermediate_outputs:
+									intermediate_files.append(output_file)
 
 					else: #audio file is mono, run through the process
 						var makeprocess = make_process(node, process_count, current_infiles.values(), slider_data)
-						# run the command
-						await run_command(makeprocess[0], makeprocess[3])
-						await get_tree().process_frame
 						var output_file = makeprocess[1]
-						
-
-						# Store output file path for this node
+						if _cache_exists(node_hash, ".wav"):
+							log_console("Cache hit: " + node.get_title(), true)
+							_copy_from_cache(node_hash, ".wav", output_file)
+							await get_tree().process_frame
+						else:
+							await run_command(makeprocess[0], makeprocess[3])
+							await get_tree().process_frame
+							if process_successful:
+								_copy_to_cache(output_file, node_hash, ".wav")
 						output_files[node_name] = output_file
-
-						# Mark file for cleanup if needed
 						if control_script.delete_intermediate_outputs:
 							for file in makeprocess[2]:
 								breakfiles.append(file)
@@ -606,7 +665,20 @@ func run_thread_with_branches():
 
 				# Increase the process step count
 				process_count += 1
-			progress_bar.value += progress_step
+			if node.has_method("set_cache_button_visible"):
+				var has_cache_meta = node.has_meta("last_cache_hash") and node.has_meta("last_cache_type")
+				if has_cache_meta:
+					var h = node.get_meta("last_cache_hash")
+					var t = node.get_meta("last_cache_type")
+					var cache_present = false
+					if t == "wav":
+						cache_present = _cache_exists(h, ".wav")
+					elif t == "ana":
+						cache_present = _cache_exists(h, ".ana")
+					elif t == "pvoc_stereo":
+						cache_present = _cache_exists(h, "_0.ana") and _cache_exists(h, "_1.ana")
+					node.set_cache_button_visible(cache_present)
+		progress_bar.value += progress_step
 	# FINAL OUTPUT STAGE
 
 	# Collect all nodes that are connected to the outputfile node
@@ -1593,3 +1665,158 @@ func _dfs_cycle(node: String, graph: Dictionary, visited: Dictionary, stack: Dic
 	# Done exploring this node
 	stack.erase(node)
 	return false
+
+# --- Cache preview playback ---
+
+func play_node_cache(node: Node) -> void:
+	if process_running:
+		log_console("Cannot preview while thread is running.", true)
+		if not console_window.visible:
+			console_window.popup_centered()
+		return
+
+	if not node.has_meta("last_cache_hash") or not node.has_meta("last_cache_type"):
+		log_console("No cached output for \"" + node.title + "\". Run the thread first.", true)
+		if not console_window.visible:
+			console_window.popup_centered()
+		return
+
+	process_successful = true
+	var hash = node.get_meta("last_cache_hash")
+	var cache_type = node.get_meta("last_cache_type")
+
+	if cache_type == "wav":
+		var cached = _cache_file_path(hash, ".wav")
+		if not FileAccess.file_exists(cached):
+			log_console("Cache expired for \"" + node.title + "\". Run the thread again.", true)
+			if not console_window.visible:
+				console_window.popup_centered()
+			return
+		log_console("Playing cached output for: " + node.title, true)
+		control_script.output_audio_player.play_outfile(ProjectSettings.globalize_path(cached))
+
+	elif cache_type == "ana":
+		var cached_ana = _cache_file_path(hash, ".ana")
+		if not FileAccess.file_exists(cached_ana):
+			log_console("Cache expired for \"" + node.title + "\". Run the thread again.", true)
+			if not console_window.visible:
+				console_window.popup_centered()
+			return
+		var abs_ana = ProjectSettings.globalize_path(cached_ana)
+		var temp_wav = ProjectSettings.globalize_path(CACHE_DIR + "_preview.wav")
+		var da = DirAccess.open(CACHE_DIR)
+		if da and FileAccess.file_exists(CACHE_DIR + "_preview.wav"):
+			da.remove("_preview.wav")
+		log_console("Resynthesising preview for: " + node.title, true)
+		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_ana, temp_wav])
+		if process_successful:
+			control_script.output_audio_player.play_outfile(temp_wav)
+
+	elif cache_type == "pvoc_stereo":
+		var cached_left = _cache_file_path(hash, "_0.ana")
+		var cached_right = _cache_file_path(hash, "_1.ana")
+		if not FileAccess.file_exists(cached_left) or not FileAccess.file_exists(cached_right):
+			log_console("Cache expired for \"" + node.title + "\". Run the thread again.", true)
+			if not console_window.visible:
+				console_window.popup_centered()
+			return
+		var abs_left = ProjectSettings.globalize_path(cached_left)
+		var abs_right = ProjectSettings.globalize_path(cached_right)
+		var temp_left = ProjectSettings.globalize_path(CACHE_DIR + "_preview_left.wav")
+		var temp_right = ProjectSettings.globalize_path(CACHE_DIR + "_preview_right.wav")
+		var temp_stereo = ProjectSettings.globalize_path(CACHE_DIR + "_preview.wav")
+		var da = DirAccess.open(CACHE_DIR)
+		if da:
+			for fname in ["_preview_left.wav", "_preview_right.wav", "_preview.wav"]:
+				if FileAccess.file_exists(CACHE_DIR + fname):
+					da.remove(fname)
+		log_console("Resynthesising preview for: " + node.title + " (stereo)", true)
+		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_left, temp_left])
+		if not process_successful:
+			return
+		await run_command(control_script.cdpprogs_location + "/pvoc", ["synth", abs_right, temp_right])
+		if not process_successful:
+			return
+		await run_command(control_script.cdpprogs_location + "/submix", ["interleave", temp_left, temp_right, temp_stereo])
+		if process_successful:
+			control_script.output_audio_player.play_outfile(temp_stereo)
+
+# --- Cache helpers ---
+
+func _notification(what):
+	if what == NOTIFICATION_EXIT_TREE:
+		clear_cache()
+
+func clear_cache() -> void:
+	if is_instance_valid(graph_edit):
+		for child in graph_edit.get_children():
+			if child is GraphNode and child.has_method("set_cache_button_visible"):
+				child.set_cache_button_visible(false)
+	var da = DirAccess.open(CACHE_DIR)
+	if da == null:
+		return
+	da.list_dir_begin()
+	var fname = da.get_next()
+	while fname != "":
+		if not da.current_is_dir():
+			da.remove(fname)
+		fname = da.get_next()
+	da.list_dir_end()
+
+func _ensure_cache_dir() -> void:
+	var da = DirAccess.open("user://")
+	if da and not da.dir_exists("soundthread_cache"):
+		da.make_dir("soundthread_cache")
+
+func _hash_string(data: String) -> String:
+	var ctx = HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update(data.to_utf8_buffer())
+	return ctx.finish().hex_encode()
+
+func _hash_source_file(file_path: String) -> String:
+	var f = FileAccess.open(file_path, FileAccess.READ)
+	if f == null:
+		return _hash_string(file_path)
+	var ctx = HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	var chunk = 65536
+	while f.get_position() < f.get_length():
+		ctx.update(f.get_buffer(min(chunk, f.get_length() - f.get_position())))
+	f.close()
+	return ctx.finish().hex_encode()
+
+func _compute_node_hash(input_hashes: Array, slider_data: Array, command: String) -> String:
+	return _hash_string(command + "|" + str(input_hashes) + "|" + str(slider_data))
+
+func _cache_file_path(hash: String, ext: String) -> String:
+	return CACHE_DIR + hash + ext
+
+func _cache_exists(hash: String, ext: String) -> bool:
+	return FileAccess.file_exists(_cache_file_path(hash, ext))
+
+func _copy_to_cache(src: String, hash: String, ext: String) -> void:
+	var dest = _cache_file_path(hash, ext)
+	var fsrc = FileAccess.open(src, FileAccess.READ)
+	if fsrc == null:
+		return
+	var fdest = FileAccess.open(dest, FileAccess.WRITE)
+	if fdest == null:
+		fsrc.close()
+		return
+	fdest.store_buffer(fsrc.get_buffer(fsrc.get_length()))
+	fdest.close()
+	fsrc.close()
+
+func _copy_from_cache(hash: String, ext: String, dest: String) -> void:
+	var src = _cache_file_path(hash, ext)
+	var fsrc = FileAccess.open(src, FileAccess.READ)
+	if fsrc == null:
+		return
+	var fdest = FileAccess.open(dest, FileAccess.WRITE)
+	if fdest == null:
+		fsrc.close()
+		return
+	fdest.store_buffer(fsrc.get_buffer(fsrc.get_length()))
+	fdest.close()
+	fsrc.close()

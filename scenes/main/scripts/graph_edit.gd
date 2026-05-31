@@ -321,7 +321,7 @@ func _make_node(command: String, skip_undo_redo := false) -> GraphNode:
 					pass
 			
 			graphnode.set_script(node_logic)
-			
+
 			control_script.undo_redo.create_action("Add Node")
 			control_script.undo_redo.add_do_method(add_child.bind(graphnode))
 			control_script.undo_redo.add_do_reference(graphnode)
@@ -329,6 +329,7 @@ func _make_node(command: String, skip_undo_redo := false) -> GraphNode:
 			control_script.undo_redo.commit_action()
 			graphnode.undo_redo = control_script.undo_redo
 			graphnode.connect("open_help", open_help)
+			graphnode.connect("play_cached", Callable(control_script.run_thread, "play_node_cache"))
 			graphnode.connect("inlet_removed", Callable(self, "on_inlet_removed"))
 			graphnode.node_moved.connect(_auto_link_nodes)
 			graphnode.dragged.connect(node_position_changed.bind(graphnode))
@@ -454,6 +455,8 @@ func restore_node(node_to_restore: GraphNode) -> void:
 	#relink everything
 	if not node_to_restore.is_connected("open_help", open_help):
 		node_to_restore.connect("open_help", open_help)
+	if node_to_restore.has_signal("play_cached") and not node_to_restore.is_connected("play_cached", Callable(control_script.run_thread, "play_node_cache")):
+		node_to_restore.connect("play_cached", Callable(control_script.run_thread, "play_node_cache"))
 	if not node_to_restore.is_connected("node_moved", _auto_link_nodes):
 		node_to_restore.node_moved.connect(_auto_link_nodes)
 	if "undo_redo" in node_to_restore:

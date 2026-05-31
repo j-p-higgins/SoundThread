@@ -3,9 +3,11 @@ extends GraphNode
 @export var min_gap: float = 0.5  # editable value in inspector for the minimum gap between min and max
 var undo_redo: UndoRedo
 var button_states = {}
+var cache_button: Button
 signal open_help
 signal inlet_removed
 signal node_moved
+signal play_cached(node: Node)
 
 func _ready() -> void:
 	var sliders := _get_all_hsliders(self) #finds all sliders
@@ -32,6 +34,15 @@ func _ready() -> void:
 	btn.tooltip_text = "Open help for " + self.title
 	btn.connect("pressed", Callable(self, "_open_help")) #pass key (process name) when button is pressed
 	titlebar.add_child(btn)
+
+	#add cache preview button
+	var cache_btn = Button.new()
+	cache_btn.text = "▶"
+	cache_btn.tooltip_text = "Preview cached output (run thread first)"
+	cache_btn.connect("pressed", Callable(self, "_play_cache"))
+	cache_btn.visible = false
+	cache_button = cache_btn
+	titlebar.add_child(cache_btn)
 	
 	if has_meta("allow_bypass") and get_meta("allow_bypass"):
 		#add bypass
@@ -106,6 +117,9 @@ func _on_slider_value_changed(value: float, changed_slider: HSlider) -> void:
 
 func _open_help():
 	open_help.emit(self.get_meta("command"), self.title)
+
+func _play_cache():
+	play_cached.emit(self)
 
 func add_inlet_to_node():
 	#called when the + button is pressed on an addremoveinlets node in the graphnode
@@ -187,6 +201,10 @@ func set_button_value(value, button) -> void:
 		button.set_pressed_no_signal(value)
 		
 	button_states[button] = value
+
+func set_cache_button_visible(v: bool) -> void:
+	if is_instance_valid(cache_button):
+		cache_button.visible = v
 
 func _bypass_node() -> void:
 	if has_meta("bypassed") and get_meta("bypassed"):

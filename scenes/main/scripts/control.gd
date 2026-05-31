@@ -131,6 +131,7 @@ func load_from_filesystem():
 			break
 
 func new_patch():
+	run_thread.clear_cache()
 	#clear old patch
 	graph_edit.clear_connections()
 

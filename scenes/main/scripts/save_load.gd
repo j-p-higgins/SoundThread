@@ -116,6 +116,7 @@ func save_graph_edit(path: String):
 	
 
 func load_graph_edit(path: String):
+	control_script.run_thread.clear_cache()
 	var file = FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		print("Failed to open file for loading")
