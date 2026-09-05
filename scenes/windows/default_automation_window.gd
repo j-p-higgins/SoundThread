@@ -6,6 +6,7 @@ var min_y: float
 var max_y: float
 var exponential: bool
 var slider_value: float
+var automation_values
 
 @onready var automation_editor = $"TabContainer/Visual Editor/PanelContainer/AutomationEditor"
 
@@ -18,7 +19,10 @@ func _ready() -> void:
 	automation_editor.exponential = exponential
 	
 	#intialise automation start and end
-	automation_editor.automation_points = [Vector2(0.0, slider_value), Vector2(100, slider_value)]
+	if automation_values == null:
+		automation_editor.automation_points = [Vector2(0.0, slider_value), Vector2(100, slider_value)]
+	else:
+		automation_editor.automation_points = automation_values
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -26,5 +30,9 @@ func _process(delta: float) -> void:
 
 
 func _on_close_requested() -> void:
+	var instance_id = self.get_meta("slider_id")
+	var slider = instance_from_id(instance_id)
+	var data = automation_editor.automation_points
+	slider.on_automation_data_received(data)
 	self.hide()
 	self.queue_free()

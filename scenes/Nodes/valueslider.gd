@@ -116,7 +116,7 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 			$HSplitContainer/HSlider/PopupMenu.remove_item(1)
 			_on_meta_changed()
 
-func _on_automation_data_received(data):
+func on_automation_data_received(data):
 	$HSplitContainer/HSlider.set_meta("brk_data", data)
 	$HSplitContainer/HSlider.editable = false
 	$HSplitContainer/HSlider/PopupMenu.set_item_text(0, "Edit Automation")
