@@ -157,6 +157,7 @@ layout_mode = 2
 metadata/_tab_index = 1
 
 [connection signal="close_requested" from="." to="." method="_on_close_requested"]
+[connection signal="tab_changed" from="TabContainer" to="." method="_on_tab_container_tab_changed"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/PencilButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_pencil_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/EraseButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_erase_button_toggled"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandVButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_v_button_toggled"]

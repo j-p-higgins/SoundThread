@@ -30,9 +30,18 @@ func _process(delta: float) -> void:
 
 
 func _on_close_requested() -> void:
-	var instance_id = self.get_meta("slider_id")
-	var slider = instance_from_id(instance_id)
-	var data = automation_editor.automation_points
-	slider.on_automation_data_received(data)
+	if automation_editor.automation_points == [Vector2(0.0, slider_value), Vector2(100, slider_value)]:
+		#user just saw the default values and then closed without drawing anything dont save values
+		pass
+	else:
+		var instance_id = self.get_meta("slider_id")
+		var slider = instance_from_id(instance_id)
+		var data = automation_editor.automation_points
+		slider.on_automation_data_received(data)
 	self.hide()
 	self.queue_free()
+
+
+func _on_tab_container_tab_changed(tab: int) -> void:
+	if tab == 1:
+		print(automation_editor.automation_points)

@@ -110,7 +110,8 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 				
 		1:
 			$HSplitContainer/HSlider.set_meta("brk_data", null)
-			$BreakFileMaker/AutomationEditor.reset_automation()
+			slider_properties.brk_data = null
+			#$BreakFileMaker/AutomationEditor.reset_automation()
 			$HSplitContainer/HSlider.editable = true
 			$HSplitContainer/HSlider/PopupMenu.set_item_text(0, "Add Automation")
 			$HSplitContainer/HSlider/PopupMenu.remove_item(1)
