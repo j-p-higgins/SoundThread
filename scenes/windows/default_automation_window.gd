@@ -8,6 +8,7 @@ var exponential: bool
 var slider_value: float
 var automation_values
 
+@onready var tab_container = $TabContainer
 @onready var automation_editor = $"TabContainer/Visual Editor/PanelContainer/AutomationEditor"
 @onready var text_editor = $"TabContainer/Text Editor"
 
@@ -22,8 +23,10 @@ func _ready() -> void:
 	#intialise automation start and end
 	if automation_values == null:
 		automation_editor.automation_points = [Vector2(0.0, slider_value), Vector2(100, slider_value)]
+		text_editor.automation_points = [Vector2(0.0, slider_value), Vector2(100, slider_value)]
 	else:
 		automation_editor.automation_points = automation_values
+		text_editor.automation_points = automation_values
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -35,15 +38,27 @@ func _on_close_requested() -> void:
 		#user just saw the default values and then closed without drawing anything dont save values
 		pass
 	else:
+		var data
+		#check which tab was edited last and pass that data to the slider
+		match tab_container.current_tab():
+			0:
+				data = automation_editor.automation_points
+			1:
+				data = text_editor.automation_points
 		var instance_id = self.get_meta("slider_id")
 		var slider = instance_from_id(instance_id)
-		var data = automation_editor.automation_points
 		slider.on_automation_data_received(data)
+		
 	self.hide()
 	self.queue_free()
 
 
 func _on_tab_container_tab_changed(tab: int) -> void:
-	if tab == 1:
-		text_editor.automation_points = automation_editor.automation_points.duplicate()
-		text_editor.create_gui()
+	match tab:
+		0:
+			automation_editor.selected_points = []
+			automation_editor.automation_points = text_editor.automation_points.duplicate()
+			automation_editor.select_points_in_drag_range()
+		1:
+			text_editor.automation_points = automation_editor.automation_points.duplicate()
+			text_editor.create_gui()
