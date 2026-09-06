@@ -45,5 +45,5 @@ func _on_close_requested() -> void:
 
 func _on_tab_container_tab_changed(tab: int) -> void:
 	if tab == 1:
-		text_editor.automation_points = automation_editor.automation_points
+		text_editor.automation_points = automation_editor.automation_points.duplicate()
 		text_editor.create_gui()

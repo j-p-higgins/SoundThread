@@ -30,6 +30,7 @@ func create_gui() -> void:
 	main_container.add_child(dummy)
 	main_container.add_child(dummy2)
 	
+	var index = 0
 	for point in automation_points:
 		var point_x = LineEdit.new()
 		var point_y = LineEdit.new()
@@ -46,50 +47,29 @@ func create_gui() -> void:
 		remove_point.custom_minimum_size.x = 30
 		add_point.custom_minimum_size.x = 30
 		
-		remove_point.pressed.connect(_remove_point.bind(remove_point))
-		add_point.pressed.connect(_add_point.bind(add_point))
+		remove_point.pressed.connect(_remove_point.bind(index))
+		add_point.pressed.connect(_add_point.bind(index))
 		
 		main_container.add_child(point_x)
 		main_container.add_child(point_y)
 		main_container.add_child(remove_point)
 		main_container.add_child(add_point)
 		
+		index += 1
 		
-	
-	
+
 func sort_points(a, b):
 	return a.x < b.x
 
-func _remove_point(button: Button) -> void:
-	var position = button.get_index()
-	
-	main_container.get_child(position - 2).queue_free()
-	main_container.get_child(position - 1).queue_free()
-	main_container.get_child(position).queue_free()
-	main_container.get_child(position + 1).queue_free()
+func _remove_point(index: int) -> void:
+	automation_points.remove_at(index)
+	create_gui()
 
-func _add_point(button: Button) -> void:
-	var position = button.get_index()
+
+func _add_point(index: int) -> void:
+	var a = automation_points[index].x
+	var b = automation_points[index + 1].x
+	var new_time = (a + b) / 2.0
 	
-	var point_x = LineEdit.new()
-	var point_y = LineEdit.new()
-	var remove_point = Button.new()
-	var add_point = Button.new()
-	
-	point_x.text = "test"
-	point_y.text = "test"
-	remove_point.text = "x"
-	add_point.text = "+"
-	
-	main_container.add_child(point_x)
-	main_container.add_child(point_y)
-	main_container.add_child(remove_point)
-	main_container.add_child(add_point)
-	
-	remove_point.pressed.connect(_remove_point.bind(remove_point))
-	add_point.pressed.connect(_add_point.bind(add_point))
-	
-	main_container.move_child(point_x, position + 1)
-	main_container.move_child(point_y, position + 2)
-	main_container.move_child(remove_point, position + 3)
-	main_container.move_child(add_point, position + 4)
+	automation_points.insert(index + 1, Vector2(new_time, automation_points[index].y))
+	create_gui()
