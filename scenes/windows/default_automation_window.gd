@@ -34,17 +34,16 @@ func _process(delta: float) -> void:
 
 
 func _on_close_requested() -> void:
-	if automation_editor.automation_points == [Vector2(0.0, slider_value), Vector2(100, slider_value)]:
-		#user just saw the default values and then closed without drawing anything dont save values
-		pass
-	else:
-		var data
-		#check which tab was edited last and pass that data to the slider
-		match tab_container.current_tab():
-			0:
-				data = automation_editor.automation_points
-			1:
-				data = text_editor.automation_points
+
+	var data
+	#check which tab was edited last and pass that data to the slider
+	match tab_container.current_tab:
+		0:
+			data = automation_editor.automation_points
+		1:
+			data = text_editor.automation_points
+	if data != [Vector2(0.0, slider_value), Vector2(100, slider_value)]:
+		#if it does equal this no automation was added only the default state was loaded up and then closed again so dont save
 		var instance_id = self.get_meta("slider_id")
 		var slider = instance_from_id(instance_id)
 		slider.on_automation_data_received(data)
@@ -58,6 +57,11 @@ func _on_tab_container_tab_changed(tab: int) -> void:
 		0:
 			automation_editor.selected_points = []
 			automation_editor.automation_points = text_editor.automation_points.duplicate()
+			#get last point and move it to position 1 to maintain my stupid data structure
+			var last_point = automation_editor.automation_points[automation_editor.automation_points.size() - 1]
+			automation_editor.automation_points.insert(1, last_point)
+			automation_editor.automation_points.remove_at(automation_editor.automation_points.size() - 1)
+			
 			automation_editor.select_points_in_drag_range()
 		1:
 			text_editor.automation_points = automation_editor.automation_points.duplicate()

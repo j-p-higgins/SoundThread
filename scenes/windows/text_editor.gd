@@ -14,7 +14,18 @@ func _process(delta: float) -> void:
 	pass
 
 func create_gui() -> void:
+	var current_focus = null
+	var focus_index = 0
 	for child in main_container.get_children():
+		if child.has_focus():
+			#store focus to restore it here
+			#
+			#
+			#
+			#
+			#
+			
+			child.release_focus()
 		child.queue_free()
 	automation_points.sort_custom(sort_points)
 	var label_x = Label.new()
@@ -47,6 +58,7 @@ func create_gui() -> void:
 		remove_point.custom_minimum_size.x = 30
 		add_point.custom_minimum_size.x = 30
 		
+		point_x.focus_exited.connect(_update_x_value.bind(index, point_x))
 		remove_point.pressed.connect(_remove_point.bind(index))
 		add_point.pressed.connect(_add_point.bind(index))
 		
@@ -60,6 +72,25 @@ func create_gui() -> void:
 
 func sort_points(a, b):
 	return a.x < b.x
+	
+func _update_x_value(index: int, text_box: LineEdit) -> void:
+	var previous_value = automation_points[index].x
+	
+	var new_value = text_box.text
+	
+	if new_value.is_valid_float():
+		new_value = new_value.to_float()
+		if new_value < 0.1 or new_value > 99.9:
+			new_value = previous_value
+	else:
+		new_value = previous_value
+			
+	automation_points[index].x = new_value
+
+	await get_tree().process_frame #this might be a bad idea
+	create_gui()
+	
+
 
 func _remove_point(index: int) -> void:
 	automation_points.remove_at(index)
