@@ -9,6 +9,7 @@ var slider_value: float
 var automation_values
 
 @onready var automation_editor = $"TabContainer/Visual Editor/PanelContainer/AutomationEditor"
+@onready var text_editor = $"TabContainer/Text Editor"
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -44,4 +45,5 @@ func _on_close_requested() -> void:
 
 func _on_tab_container_tab_changed(tab: int) -> void:
 	if tab == 1:
-		print(automation_editor.automation_points)
+		text_editor.automation_points = automation_editor.automation_points
+		text_editor.create_gui()

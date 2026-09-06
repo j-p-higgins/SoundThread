@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://cl1n10pr77gii"]
+[gd_scene load_steps=8 format=3 uid="uid://cl1n10pr77gii"]
 
 [ext_resource type="Script" uid="uid://cpkeju5o2ymso" path="res://scenes/windows/default_automation_window.gd" id="1_6moma"]
 [ext_resource type="Script" uid="uid://biey12ipsj6bp" path="res://scenes/windows/automation_editor.gd" id="2_7tbcr"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://bgr4hcmpink18" path="res://theme/images/pencil_button_icon.png" id="4_ewkop"]
 [ext_resource type="Texture2D" uid="uid://b4vdhvlwnr7hj" path="res://theme/images/eraser_button_icon.png" id="5_lv33r"]
 [ext_resource type="Texture2D" uid="uid://l71lsveqj5nh" path="res://theme/images/s_curve_button.png" id="6_ip41q"]
+[ext_resource type="Script" uid="uid://dtjkmo61agvet" path="res://scenes/windows/text_editor.gd" id="7_7tc6s"]
 
 [node name="Window" type="Window"]
 initial_position = 2
@@ -154,7 +155,26 @@ theme_override_constants/margin_top = 63
 [node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
 visible = false
 layout_mode = 2
+script = ExtResource("7_7tc6s")
 metadata/_tab_index = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="TabContainer/Text Editor"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Text Editor/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+
+[node name="TextEditorGridContainer" type="GridContainer" parent="TabContainer/Text Editor/ScrollContainer/MarginContainer"]
+layout_mode = 2
+columns = 4
+
+[node name="File" type="VBoxContainer" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
 
 [connection signal="close_requested" from="." to="." method="_on_close_requested"]
 [connection signal="tab_changed" from="TabContainer" to="." method="_on_tab_container_tab_changed"]
