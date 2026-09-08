@@ -20,6 +20,9 @@ func _ready() -> void:
 	automation_editor.max_y = max_y
 	automation_editor.exponential = exponential
 	
+	text_editor.min_y = min_y
+	text_editor.max_y = max_y
+	
 	#intialise automation start and end
 	if automation_values == null:
 		automation_editor.automation_points = [Vector2(0.0, slider_value), Vector2(100, slider_value)]

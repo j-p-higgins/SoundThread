@@ -1,5 +1,8 @@
 extends VBoxContainer
 
+var min_y: float
+var max_y: float
+
 var automation_points = []
 
 @onready var main_container = $ScrollContainer/MarginContainer/TextEditorGridContainer
@@ -28,7 +31,12 @@ func create_gui(old_x_index = null, new_value = null) -> void:
 			var new_value_index = automation_points.find(new_value)
 			if current_focus.value == new_value:
 				#the currently focused value is the one that changed, reset focus to its new position in the array
-				current_focus.index = new_value_index
+				if current_focus.x_y == "x":
+					print("don't restore")
+					#user hit enter, box still has non visble focus no need to restore it
+					current_focus.index = null
+				else:
+					current_focus.index = new_value_index
 			elif current_focus.index < old_x_index and current_focus.index > new_value_index:
 				current_focus.index += 1
 			elif current_focus.index > old_x_index and current_focus.index < new_value_index:
@@ -40,7 +48,7 @@ func create_gui(old_x_index = null, new_value = null) -> void:
 	var dummy2 = Label.new()
 	
 	label_x.text = "Time (%)"
-	label_y.text = "Value"
+	label_y.text = "Value (Min: %.2f, Max: %.2f)" % [min_y, max_y]
 	
 	main_container.add_child(label_x)
 	main_container.add_child(label_y)
@@ -80,8 +88,8 @@ func create_gui(old_x_index = null, new_value = null) -> void:
 		remove_point.focus_mode = Control.FOCUS_CLICK
 		add_point.focus_mode = Control.FOCUS_CLICK
 		
-		#point_x.caret_column = point_x.text.length()
-		#point_y.caret_column = point_y.text.length()
+		point_x.caret_column = point_x.text.length()
+		point_y.caret_column = point_y.text.length()
 		
 		#make first and last time fields uneditable and unfocusable for smooth navigation with tab
 		if index == 0 or index == automation_points.size() - 1:
@@ -91,6 +99,9 @@ func create_gui(old_x_index = null, new_value = null) -> void:
 			add_point.hide()
 		
 		point_x.focus_exited.connect(_update_x_value.bind(index, point_x))
+		point_x.text_submitted.connect(_update_x_value.bind(index, point_x).unbind(1))
+		point_y.focus_exited.connect(_update_y_value.bind(index, point_y))
+		point_y.text_submitted.connect(_update_y_value.bind(index, point_y).unbind(1))
 		add_point.pressed.connect(_add_point.bind(index))
 		
 		main_container.add_child(point_x)
@@ -162,6 +173,26 @@ func _update_x_value(index: int, text_box: LineEdit) -> void:
 		await get_tree().process_frame #this might be a bad idea
 		create_gui(index, automation_points[index])
 	
+func _update_y_value(index: int, text_box: LineEdit) -> void:
+	var previous_value = automation_points[index].y
+	
+	var new_value = text_box.text
+	
+	if new_value.is_valid_float():
+		new_value = new_value.to_float()
+		if new_value == previous_value:
+			#no edit, skip making changes
+			return
+		if new_value < min_y or new_value > max_y:
+			#value out of range reset ui to old value
+			text_box.text = str(previous_value)
+			return
+	else:
+		#value not a number reset value to old value
+		text_box.text = str(previous_value)
+		return
+			
+	automation_points[index].y = new_value
 
 
 func _remove_point(index: int) -> void:
