@@ -3,6 +3,8 @@ extends VBoxContainer
 var min_y: float
 var max_y: float
 
+const minimum_point_spacing = 0.1
+
 var automation_points = []
 
 @onready var main_container = $ScrollContainer/MarginContainer/TextEditorGridContainer
@@ -97,9 +99,13 @@ func create_gui(old_x_index = null, new_value = null) -> void:
 			point_x.editable = false
 		if  index == automation_points.size() - 1:
 			add_point.hide()
+			
+		if  index != automation_points.size() - 1:
+			if check_neighbour_for_close_x(index):
+				add_point.disabled = true
 		
-		point_x.focus_exited.connect(_update_x_value.bind(index, point_x))
-		point_x.text_submitted.connect(_update_x_value.bind(index, point_x).unbind(1))
+		point_x.focus_exited.connect(_update_x_value.bind(index, point_x, add_point))
+		point_x.text_submitted.connect(_update_x_value.bind(index, point_x, add_point).unbind(1))
 		point_y.focus_exited.connect(_update_y_value.bind(index, point_y))
 		point_y.text_submitted.connect(_update_y_value.bind(index, point_y).unbind(1))
 		add_point.pressed.connect(_add_point.bind(index))
@@ -147,7 +153,7 @@ func get_current_focused_line_edit() -> Dictionary:
 func sort_points(a, b):
 	return a.x < b.x
 	
-func _update_x_value(index: int, text_box: LineEdit) -> void:
+func _update_x_value(index: int, text_box: LineEdit, add_button: Button) -> void:
 	var previous_value = automation_points[index].x
 	
 	var new_value = text_box.text
@@ -161,6 +167,9 @@ func _update_x_value(index: int, text_box: LineEdit) -> void:
 			#value out of range reset ui to old value
 			text_box.text = str(previous_value)
 			return
+		if check_for_close_x(new_value):
+			text_box.text = str(previous_value)
+			return
 	else:
 		#value not a number reset value to old value
 		text_box.text = str(previous_value)
@@ -172,6 +181,11 @@ func _update_x_value(index: int, text_box: LineEdit) -> void:
 	if automation_points[index].x < automation_points[index - 1].x or automation_points[index].x > automation_points[index + 1].x:
 		await get_tree().process_frame #this might be a bad idea
 		create_gui(index, automation_points[index])
+	else:
+		if check_neighbour_for_close_x(index):
+			add_button.disabled = true
+		else:
+			add_button.disabled = false
 	
 func _update_y_value(index: int, text_box: LineEdit) -> void:
 	var previous_value = automation_points[index].y
@@ -207,3 +221,18 @@ func _add_point(index: int) -> void:
 	
 	automation_points.insert(index + 1, Vector2(new_time, automation_points[index].y))
 	create_gui()
+	
+func check_for_close_x(value: float) -> bool:
+	for point in automation_points:
+		if abs(point.x - value) < minimum_point_spacing:
+				return true
+	return false
+	
+
+func check_neighbour_for_close_x(index: int) -> bool:
+	var value = automation_points[index].x
+	var neighbour = automation_points[index + 1].x
+	
+	if abs(value - neighbour) < minimum_point_spacing * 2:
+		return true
+	return false
