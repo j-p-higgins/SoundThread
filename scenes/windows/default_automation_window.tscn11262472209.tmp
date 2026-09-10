@@ -1,0 +1,191 @@
+[gd_scene load_steps=8 format=3 uid="uid://cl1n10pr77gii"]
+
+[ext_resource type="Script" uid="uid://cpkeju5o2ymso" path="res://scenes/windows/default_automation_window.gd" id="1_6moma"]
+[ext_resource type="Script" uid="uid://biey12ipsj6bp" path="res://scenes/windows/automation_editor.gd" id="2_7tbcr"]
+[ext_resource type="ButtonGroup" uid="uid://d1tysjtn3g6fe" path="res://scenes/windows/automation_alt_modes_button_group.tres" id="3_y26o1"]
+[ext_resource type="Texture2D" uid="uid://bgr4hcmpink18" path="res://theme/images/pencil_button_icon.png" id="4_ewkop"]
+[ext_resource type="Texture2D" uid="uid://b4vdhvlwnr7hj" path="res://theme/images/eraser_button_icon.png" id="5_lv33r"]
+[ext_resource type="Texture2D" uid="uid://l71lsveqj5nh" path="res://theme/images/s_curve_button.png" id="6_ip41q"]
+[ext_resource type="Script" uid="uid://dtjkmo61agvet" path="res://scenes/windows/text_editor.gd" id="7_7tc6s"]
+
+[node name="Window" type="Window"]
+initial_position = 2
+size = Vector2i(700, 500)
+min_size = Vector2i(700, 500)
+script = ExtResource("1_6moma")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+visible = false
+offset_left = -6.0
+offset_top = -8.0
+offset_right = 715.0
+offset_bottom = 30.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+color = Color(0.0588235, 0.0588235, 0.0588235, 0.917647)
+
+[node name="TabContainer" type="TabContainer" parent="."]
+custom_minimum_size = Vector2(700, 501)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 1.0
+offset_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Visual Editor" type="VBoxContainer" parent="TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+theme_override_constants/margin_top = 1
+
+[node name="EditorData" type="HBoxContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+alignment = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+theme_override_constants/margin_left = 1
+
+[node name="PencilButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
+custom_minimum_size = Vector2(31, 0)
+layout_mode = 2
+tooltip_text = "Draw when holding alt"
+toggle_mode = true
+button_pressed = true
+button_group = ExtResource("3_y26o1")
+icon = ExtResource("4_ewkop")
+icon_alignment = 1
+expand_icon = true
+
+[node name="EraseButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
+custom_minimum_size = Vector2(31, 0)
+layout_mode = 2
+tooltip_text = "Erase when holding alt"
+toggle_mode = true
+button_group = ExtResource("3_y26o1")
+icon = ExtResource("5_lv33r")
+icon_alignment = 1
+expand_icon = true
+
+[node name="ExpandVButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
+custom_minimum_size = Vector2(31, 0)
+layout_mode = 2
+tooltip_text = "Stretch vertically when holding alt"
+toggle_mode = true
+button_group = ExtResource("3_y26o1")
+text = "↕"
+
+[node name="ExpandHButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
+custom_minimum_size = Vector2(31, 0)
+layout_mode = 2
+tooltip_text = "Stretch horizontally when holding alt"
+toggle_mode = true
+button_group = ExtResource("3_y26o1")
+text = "↔"
+
+[node name="SkewButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
+custom_minimum_size = Vector2(31, 0)
+layout_mode = 2
+tooltip_text = "Tilt when holding alt"
+toggle_mode = true
+button_group = ExtResource("3_y26o1")
+text = "↗"
+
+[node name="CurveButton" type="Button" parent="TabContainer/Visual Editor/EditorData"]
+custom_minimum_size = Vector2(31, 0)
+layout_mode = 2
+tooltip_text = "Draw curve when holding alt  (click button to cycle between curve shapes)"
+toggle_mode = true
+button_group = ExtResource("3_y26o1")
+icon = ExtResource("6_ip41q")
+icon_alignment = 1
+expand_icon = true
+
+[node name="MarginContainer2" type="MarginContainer" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="XLabel" type="Label" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+text = "X:"
+
+[node name="XEdit" type="LineEdit" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+
+[node name="YLabel" type="Label" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+text = "Y:"
+
+[node name="YEdit" type="LineEdit" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+
+[node name="MarginContainer3" type="MarginContainer" parent="TabContainer/Visual Editor/EditorData"]
+layout_mode = 2
+theme_override_constants/margin_left = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AutomationEditor" type="Control" parent="TabContainer/Visual Editor/PanelContainer"]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+script = ExtResource("2_7tbcr")
+
+[node name="AutomationScrollBar" type="HScrollBar" parent="TabContainer/Visual Editor"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+page = 100.0
+
+[node name="Label" type="Label" parent="TabContainer/Visual Editor"]
+visible = false
+layout_mode = 2
+
+[node name="TempPadding" type="MarginContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+theme_override_constants/margin_top = 63
+
+[node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
+visible = false
+layout_mode = 2
+script = ExtResource("7_7tc6s")
+metadata/_tab_index = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="TabContainer/Text Editor"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Text Editor/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+
+[node name="TextEditorGridContainer" type="GridContainer" parent="TabContainer/Text Editor/ScrollContainer/MarginContainer"]
+layout_mode = 2
+columns = 4
+
+[node name="File" type="VBoxContainer" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[connection signal="close_requested" from="." to="." method="_on_close_requested"]
+[connection signal="tab_changed" from="TabContainer" to="." method="_on_tab_container_tab_changed"]
+[connection signal="toggled" from="TabContainer/Visual Editor/EditorData/PencilButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_pencil_button_toggled"]
+[connection signal="toggled" from="TabContainer/Visual Editor/EditorData/EraseButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_erase_button_toggled"]
+[connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandVButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_v_button_toggled"]
+[connection signal="toggled" from="TabContainer/Visual Editor/EditorData/ExpandHButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_expand_h_button_toggled"]
+[connection signal="toggled" from="TabContainer/Visual Editor/EditorData/SkewButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_skew_button_toggled"]
+[connection signal="toggled" from="TabContainer/Visual Editor/EditorData/CurveButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_curve_button_toggled"]
+[connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_focus_exited"]
+[connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/XEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_x_edit_text_submitted"]
+[connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_focus_exited"]
+[connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_text_submitted"]
+[connection signal="value_changed" from="TabContainer/Visual Editor/AutomationScrollBar" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_automation_scroll_bar_value_changed"]

@@ -1236,31 +1236,22 @@ func make_process(node: Node, process_count: int, current_infile: Array, slider_
 					if node.has_meta("outputduration"):
 						for i in range(sorted_brk_data.size()):
 							var point = sorted_brk_data[i]
-							var new_x = float(node.get_meta("outputduration")) * (point.x / 700) #output time
+							var new_x = float(node.get_meta("outputduration")) * (point.x / 100) #output time
 							if i == sorted_brk_data.size() - 1: #check if this is last automation point
 								new_x = float(node.get_meta("outputduration")) + 0.1  # force last point's x to infile_length + 100ms to make sure the file is defo over
 							var new_y
-							#check if slider is exponential and scale automation
-							if exponential:
-								new_y = remap_y_to_log_scale(point.y, 0.0, 255.0, min_slider, max_slider)
-							else:
-								new_y = remap(point.y, 255, 0, min_slider, max_slider) #slider value
 							if time: #check if this is a time slider and convert to percentage of input file
-								new_y = infile_length * (new_y / 100)
+								new_y = infile_length * (point.y / 100)
+							else:
+								new_y = point.y
 							calculated_brk.append(Vector2(new_x, new_y))
 					else:
 						for i in range(sorted_brk_data.size()):
 							var point = sorted_brk_data[i]
-							var new_x = infile_length * (point.x / 700) #time
+							var new_x = infile_length * (point.x / 100) #time
 							if i == sorted_brk_data.size() - 1: #check if this is last automation point
 								new_x = infile_length + 0.1  # force last point's x to infile_length + 100ms to make sure the file is defo over
-							var new_y
-							#check if slider is exponential and scale automation
-							if exponential:
-								new_y = remap_y_to_log_scale(point.y, 0.0, 255.0, min_slider, max_slider)
-							else:
-								new_y = remap(point.y, 255, 0, min_slider, max_slider) #slider value
-							calculated_brk.append(Vector2(new_x, new_y))
+							calculated_brk.append(Vector2(new_x, point.y))
 						
 					#make text file
 					var brk_file_path = output_file.get_basename() + "_" + str(slider_count) + ".txt"
