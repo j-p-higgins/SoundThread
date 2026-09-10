@@ -208,6 +208,16 @@ access = 2
 filters = PackedStringArray("*.brk", "*.txt")
 use_native_dialog = true
 
+[node name="LoadDialog" type="FileDialog" parent="TabContainer/File"]
+auto_translate_mode = 1
+title = "Open a File"
+initial_position = 4
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.brk", "*.txt")
+use_native_dialog = true
+
 [connection signal="close_requested" from="." to="." method="_on_close_requested"]
 [connection signal="tab_changed" from="TabContainer" to="." method="_on_tab_container_tab_changed"]
 [connection signal="toggled" from="TabContainer/Visual Editor/EditorData/PencilButton" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_pencil_button_toggled"]
@@ -221,5 +231,7 @@ use_native_dialog = true
 [connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_focus_exited"]
 [connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_text_submitted"]
 [connection signal="value_changed" from="TabContainer/Visual Editor/AutomationScrollBar" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_automation_scroll_bar_value_changed"]
+[connection signal="pressed" from="TabContainer/File/VBoxContainer/LoadButton" to="TabContainer/File" method="_on_load_button_pressed"]
 [connection signal="pressed" from="TabContainer/File/VBoxContainer/SaveButton" to="TabContainer/File" method="_on_save_button_pressed"]
 [connection signal="file_selected" from="TabContainer/File/SaveDialog" to="TabContainer/File" method="_on_save_dialog_file_selected"]
+[connection signal="file_selected" from="TabContainer/File/LoadDialog" to="TabContainer/File" method="_on_load_dialog_file_selected"]

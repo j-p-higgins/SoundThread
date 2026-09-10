@@ -29,6 +29,8 @@ func _ready() -> void:
 	file_editor.max_y = max_y
 	file_editor.exponential = exponential
 	
+	file_editor.automation_loaded.connect(_on_automation_file_loaded)
+	
 	#intialise automation start and end
 	if automation_values == null:
 		automation_editor.automation_points = [Vector2(0.0, slider_value), Vector2(100, slider_value)]
@@ -83,3 +85,8 @@ func _on_tab_container_tab_changed(tab: int) -> void:
 				file_editor.automation_points = automation_editor.automation_points.duplicate()
 			else:
 				file_editor.automation_points = text_editor.automation_points.duplicate()
+				
+func _on_automation_file_loaded(loaded_automation_points: Array) -> void:
+	automation_editor.selected_points = []
+	automation_editor.automation_points = loaded_automation_points
+	text_editor.automation_points = loaded_automation_points
