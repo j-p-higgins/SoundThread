@@ -69,7 +69,7 @@ func _on_load_dialog_file_selected(path: String) -> void:
 					continue
 				else:
 					print("Malformed meta data, treating file as non-soundthread format")
-					soundthread_format = false
+					loaded_min_value = null
 					break
 					
 			elif line.begins_with(";Max:"):
@@ -79,7 +79,7 @@ func _on_load_dialog_file_selected(path: String) -> void:
 					continue
 				else:
 					print("Malformed meta data, treating file as non-soundthread format")
-					soundthread_format = false
+					loaded_max_value = null
 					break
 			
 			elif line.begins_with(";Exponential:"):
@@ -90,7 +90,7 @@ func _on_load_dialog_file_selected(path: String) -> void:
 					loaded_exponential = true
 				else:
 					print("Malformed meta data, treating file as non-soundthread format")
-					soundthread_format = false
+					loaded_exponential = null
 					break
 				
 			else:
@@ -111,10 +111,36 @@ func _on_load_dialog_file_selected(path: String) -> void:
 				
 	brk_file.close()
 	
-	print(soundthread_format)
-	print(loaded_min_value)
-	print(loaded_max_value)
-	print(loaded_exponential)
-	print(loaded_automation_points)
+	if soundthread_format == true and (loaded_min_value == null or loaded_max_value == null or loaded_exponential == null):
+		#missing some meta data so treat as non-soundthread format
+		soundthread_format = false
 	
-	automation_loaded.emit(loaded_automation_points)
+	if soundthread_format:
+		if loaded_min_value != min_y or loaded_max_value != max_y or loaded_exponential != exponential:
+			for i in range(loaded_automation_points.size()):
+				var loaded_y = loaded_automation_points[i].y
+				var normalised_y = value_to_normalised(loaded_y, loaded_min_value, loaded_max_value, loaded_exponential)
+				var remapped_y = normalised_to_value(normalised_y)
+				loaded_automation_points[i].y = remapped_y
+			
+	if loaded_automation_points.size() > 1:
+		automation_loaded.emit(loaded_automation_points)
+		automation_points = loaded_automation_points
+
+func value_to_normalised(value: float, loaded_min_y: float, loaded_max_y: float, loaded_exponential: bool) -> float:
+	if loaded_exponential:
+		var log_min = log(loaded_min_y)
+		var log_max = log(loaded_max_y)
+		
+		return inverse_lerp(log_min, log_max, log(value))
+	
+	return inverse_lerp(loaded_min_y, loaded_max_y, value)
+	
+func normalised_to_value(t: float) -> float:
+	if exponential:
+		var log_min = log(min_y)
+		var log_max = log(max_y)
+		
+		return exp(lerp(log_min, log_max, t))
+	
+	return lerp(min_y, max_y, t)
