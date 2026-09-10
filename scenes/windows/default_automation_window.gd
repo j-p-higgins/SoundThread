@@ -11,6 +11,8 @@ var automation_values
 @onready var tab_container = $TabContainer
 @onready var automation_editor = $"TabContainer/Visual Editor/PanelContainer/AutomationEditor"
 @onready var text_editor = $"TabContainer/Text Editor"
+@onready var file_editor = $TabContainer/File
+@onready var save_dialog = $TabContainer/File/SaveDialog
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -23,6 +25,10 @@ func _ready() -> void:
 	text_editor.min_y = min_y
 	text_editor.max_y = max_y
 	
+	file_editor.min_y = min_y
+	file_editor.max_y = max_y
+	file_editor.exponential = exponential
+	
 	#intialise automation start and end
 	if automation_values == null:
 		automation_editor.automation_points = [Vector2(0.0, slider_value), Vector2(100, slider_value)]
@@ -30,6 +36,7 @@ func _ready() -> void:
 	else:
 		automation_editor.automation_points = automation_values
 		text_editor.automation_points = automation_values
+		
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -69,3 +76,10 @@ func _on_tab_container_tab_changed(tab: int) -> void:
 		1:
 			text_editor.automation_points = automation_editor.automation_points.duplicate()
 			text_editor.create_gui()
+		2:
+			var last_tab = tab_container.get_previous_tab()
+			
+			if last_tab == 0:
+				file_editor.automation_points = automation_editor.automation_points.duplicate()
+			else:
+				file_editor.automation_points = text_editor.automation_points.duplicate()

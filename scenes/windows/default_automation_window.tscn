@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cl1n10pr77gii"]
+[gd_scene load_steps=9 format=3 uid="uid://cl1n10pr77gii"]
 
 [ext_resource type="Script" uid="uid://cpkeju5o2ymso" path="res://scenes/windows/default_automation_window.gd" id="1_6moma"]
 [ext_resource type="Script" uid="uid://biey12ipsj6bp" path="res://scenes/windows/automation_editor.gd" id="2_7tbcr"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://b4vdhvlwnr7hj" path="res://theme/images/eraser_button_icon.png" id="5_lv33r"]
 [ext_resource type="Texture2D" uid="uid://l71lsveqj5nh" path="res://theme/images/s_curve_button.png" id="6_ip41q"]
 [ext_resource type="Script" uid="uid://dtjkmo61agvet" path="res://scenes/windows/text_editor.gd" id="7_7tc6s"]
+[ext_resource type="Script" uid="uid://b4o80mervxkd2" path="res://scenes/windows/load_save_automation_file.gd" id="8_r8yjv"]
 
 [node name="Window" type="Window"]
 initial_position = 2
@@ -173,9 +174,39 @@ theme_override_constants/margin_top = 10
 layout_mode = 2
 columns = 4
 
-[node name="LineEdit" type="LineEdit" parent="TabContainer/Text Editor"]
+[node name="File" type="MarginContainer" parent="TabContainer"]
 visible = false
 layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+script = ExtResource("8_r8yjv")
+metadata/_tab_index = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/File"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="TabContainer/File/VBoxContainer"]
+layout_mode = 2
+text = "Import"
+
+[node name="LoadButton" type="Button" parent="TabContainer/File/VBoxContainer"]
+layout_mode = 2
+text = "Import Automation File"
+
+[node name="Label2" type="Label" parent="TabContainer/File/VBoxContainer"]
+layout_mode = 2
+text = "Export"
+
+[node name="SaveButton" type="Button" parent="TabContainer/File/VBoxContainer"]
+layout_mode = 2
+text = "Export Automation File"
+
+[node name="SaveDialog" type="FileDialog" parent="TabContainer/File"]
+title = "Export Automation File"
+initial_position = 4
+access = 2
+filters = PackedStringArray("*.brk", "*.txt")
+use_native_dialog = true
 
 [connection signal="close_requested" from="." to="." method="_on_close_requested"]
 [connection signal="tab_changed" from="TabContainer" to="." method="_on_tab_container_tab_changed"]
@@ -190,3 +221,5 @@ layout_mode = 2
 [connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_focus_exited"]
 [connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_text_submitted"]
 [connection signal="value_changed" from="TabContainer/Visual Editor/AutomationScrollBar" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_automation_scroll_bar_value_changed"]
+[connection signal="pressed" from="TabContainer/File/VBoxContainer/SaveButton" to="TabContainer/File" method="_on_save_button_pressed"]
+[connection signal="file_selected" from="TabContainer/File/SaveDialog" to="TabContainer/File" method="_on_save_dialog_file_selected"]
