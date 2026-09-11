@@ -28,6 +28,8 @@ func _ready():
 	ensure_setting("interface_settings", "last_used_input_folder", "no_file")
 	ensure_setting("interface_settings", "autoplay", true)
 	ensure_setting("interface_settings", "favourites", [])
+	ensure_setting("interface_settings", "last_used_brk_load_folder", "no_file")
+	ensure_setting("interface_settings", "last_used_brk_save_folder", "no_file")
 	ensure_setting("audio_settings", "device", "Default")
 	
 
