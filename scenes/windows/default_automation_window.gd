@@ -65,28 +65,31 @@ func _on_close_requested() -> void:
 
 
 func _on_tab_container_tab_changed(tab: int) -> void:
+	var last_tab = tab_container.get_previous_tab()
 	match tab:
 		0:
 			automation_editor.selected_points = []
 			automation_editor.automation_points = text_editor.automation_points.duplicate()
-			#get last point and move it to position 1 to maintain my stupid data structure
-			var last_point = automation_editor.automation_points[automation_editor.automation_points.size() - 1]
-			automation_editor.automation_points.insert(1, last_point)
-			automation_editor.automation_points.remove_at(automation_editor.automation_points.size() - 1)
-			
+			automation_editor.automation_points = format_array_for_visual_editor(automation_editor.automation_points)
 			automation_editor.select_points_in_drag_range()
 		1:
 			text_editor.automation_points = automation_editor.automation_points.duplicate()
 			text_editor.create_gui()
 		2:
-			var last_tab = tab_container.get_previous_tab()
-			
 			if last_tab == 0:
 				file_editor.automation_points = automation_editor.automation_points.duplicate()
 			else:
 				file_editor.automation_points = text_editor.automation_points.duplicate()
 				
+func format_array_for_visual_editor(array_to_format: Array) -> Array:
+	var last_point = array_to_format[array_to_format.size() - 1]
+	array_to_format.insert(1, last_point)
+	array_to_format.remove_at(array_to_format.size() - 1)
+	return array_to_format
+	
 func _on_automation_file_loaded(loaded_automation_points: Array) -> void:
+	text_editor.automation_points = loaded_automation_points
+	loaded_automation_points = format_array_for_visual_editor(loaded_automation_points)
 	automation_editor.selected_points = []
 	automation_editor.automation_points = loaded_automation_points
-	text_editor.automation_points = loaded_automation_points
+	tab_container.current_tab = 0

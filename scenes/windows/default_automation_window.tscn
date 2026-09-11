@@ -189,6 +189,11 @@ layout_mode = 2
 layout_mode = 2
 text = "Import"
 
+[node name="ErrorLabel" type="Label" parent="TabContainer/File/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Error: No automation data found in file"
+
 [node name="LoadButton" type="Button" parent="TabContainer/File/VBoxContainer"]
 layout_mode = 2
 text = "Import Automation File"
