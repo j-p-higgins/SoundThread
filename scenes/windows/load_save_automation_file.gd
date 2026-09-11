@@ -16,10 +16,17 @@ func _ready() -> void:
 	error_label.hide()
 
 func _on_save_button_pressed() -> void:
+	var interface_settings = ConfigHandler.load_interface_settings()
+	var save_folder = interface_settings.last_used_brk_save_folder
+	if save_folder != "no_file" and DirAccess.open(save_folder) != null:
+		$SaveDialog.current_dir = save_folder
+	
 	$SaveDialog.popup()
 
 
 func _on_save_dialog_file_selected(path: String) -> void:
+	ConfigHandler.save_interface_settings("last_used_brk_save_folder", path.get_base_dir())
+	
 	automation_points.sort_custom(sort_points)
 	
 	var file = FileAccess.open(path, FileAccess.WRITE)
@@ -39,11 +46,18 @@ func sort_points(a, b):
 	
 
 func _on_load_button_pressed() -> void:
-	$VBoxContainer/ErrorLabel.hide()
+	error_label.hide()
+	
+	var interface_settings = ConfigHandler.load_interface_settings()
+	var load_folder = interface_settings.last_used_brk_load_folder
+	if load_folder != "no_file" and DirAccess.open(load_folder) != null:
+		$LoadDialog.current_dir = load_folder
+		
 	$LoadDialog.popup()
 
 
 func _on_load_dialog_file_selected(path: String) -> void:
+	ConfigHandler.save_interface_settings("last_used_brk_load_folder", path.get_base_dir())
 	#regex for splitting string at whitespace
 	var regex = RegEx.create_from_string("\\S+")
 	

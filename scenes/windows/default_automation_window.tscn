@@ -179,6 +179,7 @@ visible = false
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
 script = ExtResource("8_r8yjv")
 metadata/_tab_index = 2
 
@@ -197,6 +198,10 @@ text = "Error: No automation data found in file"
 [node name="LoadButton" type="Button" parent="TabContainer/File/VBoxContainer"]
 layout_mode = 2
 text = "Import Automation File"
+
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/File/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 4
 
 [node name="Label2" type="Label" parent="TabContainer/File/VBoxContainer"]
 layout_mode = 2

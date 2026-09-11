@@ -40,10 +40,6 @@ func _ready() -> void:
 		text_editor.automation_points = automation_values
 		
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-
 
 func _on_close_requested() -> void:
 
@@ -54,6 +50,8 @@ func _on_close_requested() -> void:
 			data = automation_editor.automation_points
 		1:
 			data = text_editor.automation_points
+		2:
+			data = file_editor.automation_points
 	if data != [Vector2(0.0, slider_value), Vector2(100, slider_value)]:
 		#if it does equal this no automation was added only the default state was loaded up and then closed again so dont save
 		var instance_id = self.get_meta("slider_id")
