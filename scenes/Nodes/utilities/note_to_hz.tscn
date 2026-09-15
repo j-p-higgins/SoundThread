@@ -86,7 +86,6 @@ layout_mode = 2
 size_flags_vertical = 3
 editable = false
 wrap_mode = 1
-delimiter_strings = Array[String](["\" \"", "' '"])
 
 [connection signal="item_selected" from="Note" to="." method="_on_item_list_item_selected"]
 [connection signal="item_selected" from="Accidental" to="." method="_on_item_list_2_item_selected"]

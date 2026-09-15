@@ -63,7 +63,13 @@ func _on_load_dialog_file_selected(path: String) -> void:
 	
 	if path.get_extension().to_lower() == "mid":
 		var parser = MIDIParser.new()
-		var midi_data = parser.midi_to_brk(path)
+		var midi_info = parser.midi_to_brk(path, true)
+		var midi_data = midi_info["tracks"]
+		if midi_data.size() > 1:
+			var track_1 = midi_data[0]
+			var brk = track_1["brk"]
+			automation_loaded.emit(brk)
+			automation_points = brk
 		return
 	
 	var brk_file = FileAccess.open(path, FileAccess.READ)
