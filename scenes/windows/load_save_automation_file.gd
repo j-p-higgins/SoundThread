@@ -61,6 +61,11 @@ func _on_load_dialog_file_selected(path: String) -> void:
 	#regex for splitting string at whitespace
 	var regex = RegEx.create_from_string("\\S+")
 	
+	if path.get_extension().to_lower() == "mid":
+		var parser = MIDIParser.new()
+		var midi_data = parser.midi_to_brk(path)
+		return
+	
 	var brk_file = FileAccess.open(path, FileAccess.READ)
 	
 	if brk_file == null:

@@ -225,7 +225,7 @@ initial_position = 4
 ok_button_text = "Open"
 file_mode = 0
 access = 2
-filters = PackedStringArray("*.brk", "*.txt")
+filters = PackedStringArray("*.brk", "*.txt", "*.mid")
 use_native_dialog = true
 
 [connection signal="close_requested" from="." to="." method="_on_close_requested"]
