@@ -170,6 +170,7 @@ func _make_node(command: String, skip_undo_redo := false) -> GraphNode:
 						var hslider = slider.get_node("HSplitContainer/HSlider")
 						hslider.set_meta("brk", brk)
 						hslider.set_meta("time", time)
+						hslider.set_meta("outputduration", outputduration)
 						hslider.set_meta("min", minimum)
 						hslider.set_meta("max", maximum)
 						hslider.set_meta("flag", flag)
