@@ -79,6 +79,10 @@ func _on_slider_value_changed(value: float, changed_slider: HSlider) -> void:
 	
 	if changed_slider.has_meta("outputduration"):
 		is_outputduration = changed_slider.get_meta("outputduration")
+		
+	#set output duration meta if this is the output duration slider
+	if is_outputduration:
+		set_meta("outputduration", value)
 	
 	#if not exits function
 	if not is_min and not is_max:
@@ -100,9 +104,10 @@ func _on_slider_value_changed(value: float, changed_slider: HSlider) -> void:
 			if changed_slider.value < min_value + min_gap:
 				changed_slider.value = min_value + min_gap
 				
-	#set output duration meta if this is the output duration slider
+	#reset output duration meta if this is the output duration slider incase min max has changed it
 	if is_outputduration:
 		set_meta("outputduration", value)
+
 
 func _open_help():
 	open_help.emit(self.get_meta("command"), self.title)
