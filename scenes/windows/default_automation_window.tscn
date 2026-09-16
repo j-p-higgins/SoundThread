@@ -195,6 +195,11 @@ visible = false
 layout_mode = 2
 text = "Error: No automation data found in file"
 
+[node name="MIDITrackSelect" type="ItemList" parent="TabContainer/File/VBoxContainer"]
+visible = false
+layout_mode = 2
+auto_height = true
+
 [node name="LoadButton" type="Button" parent="TabContainer/File/VBoxContainer"]
 layout_mode = 2
 text = "Import Automation File"
@@ -241,6 +246,7 @@ use_native_dialog = true
 [connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_focus_exited"]
 [connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_text_submitted"]
 [connection signal="value_changed" from="TabContainer/Visual Editor/AutomationScrollBar" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_automation_scroll_bar_value_changed"]
+[connection signal="item_selected" from="TabContainer/File/VBoxContainer/MIDITrackSelect" to="TabContainer/File" method="_on_midi_track_select_item_selected"]
 [connection signal="pressed" from="TabContainer/File/VBoxContainer/LoadButton" to="TabContainer/File" method="_on_load_button_pressed"]
 [connection signal="pressed" from="TabContainer/File/VBoxContainer/SaveButton" to="TabContainer/File" method="_on_save_button_pressed"]
 [connection signal="file_selected" from="TabContainer/File/SaveDialog" to="TabContainer/File" method="_on_save_dialog_file_selected"]
