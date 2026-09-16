@@ -85,9 +85,10 @@ func format_array_for_visual_editor(array_to_format: Array) -> Array:
 	array_to_format.remove_at(array_to_format.size() - 1)
 	return array_to_format
 	
-func _on_automation_file_loaded(loaded_automation_points: Array) -> void:
+func _on_automation_file_loaded(loaded_automation_points: Array, change_tab:= true) -> void:
 	text_editor.automation_points = loaded_automation_points
 	loaded_automation_points = format_array_for_visual_editor(loaded_automation_points)
 	automation_editor.selected_points = []
 	automation_editor.automation_points = loaded_automation_points
-	tab_container.current_tab = 0
+	if change_tab:
+		tab_container.current_tab = 0

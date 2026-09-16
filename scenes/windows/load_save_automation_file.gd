@@ -67,20 +67,22 @@ func _on_load_dialog_file_selected(path: String) -> void:
 	
 	if path.get_extension().to_lower() == "mid":
 		var parser = MIDIParser.new()
-		var midi_info = parser.midi_to_brk(path, true)
+		var midi_info = parser.midi_to_brk(path, false)
 		var midi_data = midi_info["tracks"]
 		if midi_data.size() > 0:
 			track_select.clear()
 			track_select.show()
 			midi_import = midi_data
+			var change_tab = true
 			if midi_data.size() > 1:
+				change_tab = false
 				midi_import = midi_data
 				for track in midi_data:
 					track_select.add_item(str(track["track_number"]) + ": " + track["track_name"])
 				track_select.select(0)
 			var track_1 = midi_data[0]
 			var brk = track_1["brk"]
-			automation_loaded.emit(brk)
+			automation_loaded.emit(brk, change_tab)
 			automation_points = brk
 		return
 	
