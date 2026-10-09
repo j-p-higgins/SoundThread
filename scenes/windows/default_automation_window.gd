@@ -5,11 +5,13 @@ var max_x = 100.0
 var min_y: float
 var max_y: float
 var exponential: bool
+var step_amount: float
 var slider_value: float
 var automation_values
 
 @onready var tab_container = $TabContainer
 @onready var automation_editor = $"TabContainer/Visual Editor/PanelContainer/AutomationEditor"
+@onready var automation_generator = $"TabContainer/Visual Editor/MarginContainer2/AutomationGenerator"
 @onready var text_editor = $"TabContainer/Text Editor"
 @onready var file_editor = $TabContainer/File
 @onready var save_dialog = $TabContainer/File/SaveDialog
@@ -21,6 +23,13 @@ func _ready() -> void:
 	automation_editor.min_y = min_y
 	automation_editor.max_y = max_y
 	automation_editor.exponential = exponential
+	
+	automation_generator.min_y = min_y
+	automation_generator.max_y = max_y
+	automation_generator.exponential = exponential
+	automation_generator.step_amount = step_amount
+	automation_generator.generate_automation_points.connect(_on_generate_automation)
+	automation_generator.init()
 	
 	text_editor.min_y = min_y
 	text_editor.max_y = max_y
@@ -38,6 +47,7 @@ func _ready() -> void:
 	else:
 		automation_editor.automation_points = automation_values
 		text_editor.automation_points = automation_values
+		
 		
 
 
@@ -92,3 +102,15 @@ func _on_automation_file_loaded(loaded_automation_points: Array, change_tab:= tr
 	automation_editor.automation_points = loaded_automation_points
 	if change_tab:
 		tab_container.current_tab = 0
+
+func _on_generate_automation() -> void:
+	var current_automation_points = automation_editor.automation_points
+	var selection_start = automation_editor.selection_start
+	var selection_end = automation_editor.selection_end
+	if selection_start == null or selection_end == null:
+		selection_start = 0
+		selection_end = 100
+	selection_start = clamp(selection_start, 0, 100)
+	selection_end = clamp(selection_end, 0, 100)
+	
+	automation_generator.generate_automation(current_automation_points, selection_start, selection_end)

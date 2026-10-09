@@ -34,6 +34,7 @@ func create_automation_window(slider_id: int, automation_parent_name: StringName
 	automation_window.min_y = slider_properties.minimum_value
 	automation_window.max_y = slider_properties.maximum_value
 	automation_window.exponential = slider_properties.exponential
+	automation_window.step_amount = slider_properties.step_amount
 	automation_window.slider_value = slider_value
 	automation_window.automation_values = slider_properties.brk_data
 	

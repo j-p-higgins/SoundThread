@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://cl1n10pr77gii"]
+[gd_scene load_steps=10 format=3 uid="uid://cl1n10pr77gii"]
 
 [ext_resource type="Script" uid="uid://cpkeju5o2ymso" path="res://scenes/windows/default_automation_window.gd" id="1_6moma"]
 [ext_resource type="Script" uid="uid://biey12ipsj6bp" path="res://scenes/windows/automation_editor.gd" id="2_7tbcr"]
@@ -7,12 +7,13 @@
 [ext_resource type="Texture2D" uid="uid://b4vdhvlwnr7hj" path="res://theme/images/eraser_button_icon.png" id="5_lv33r"]
 [ext_resource type="Texture2D" uid="uid://l71lsveqj5nh" path="res://theme/images/s_curve_button.png" id="6_ip41q"]
 [ext_resource type="Script" uid="uid://dtjkmo61agvet" path="res://scenes/windows/text_editor.gd" id="7_7tc6s"]
+[ext_resource type="Script" uid="uid://onedjgwcxqlv" path="res://scenes/windows/automation_generator.gd" id="7_upuws"]
 [ext_resource type="Script" uid="uid://b4o80mervxkd2" path="res://scenes/windows/load_save_automation_file.gd" id="8_r8yjv"]
 
 [node name="Window" type="Window"]
 initial_position = 2
-size = Vector2i(700, 500)
-min_size = Vector2i(700, 500)
+size = Vector2i(810, 600)
+min_size = Vector2i(810, 600)
 script = ExtResource("1_6moma")
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -152,8 +153,55 @@ visible = false
 layout_mode = 2
 
 [node name="TempPadding" type="MarginContainer" parent="TabContainer/Visual Editor"]
+visible = false
 layout_mode = 2
 theme_override_constants/margin_top = 63
+
+[node name="MarginContainer2" type="MarginContainer" parent="TabContainer/Visual Editor"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 6
+
+[node name="AutomationGenerator" type="VBoxContainer" parent="TabContainer/Visual Editor/MarginContainer2"]
+layout_mode = 2
+script = ExtResource("7_upuws")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator/HBoxContainer"]
+layout_mode = 2
+text = "Automation Generator: "
+
+[node name="GeneratorType" type="OptionButton" parent="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator/HBoxContainer"]
+layout_mode = 2
+selected = 0
+item_count = 7
+popup/item_0/text = "Sine"
+popup/item_0/id = 0
+popup/item_1/text = "Triangle"
+popup/item_1/id = 1
+popup/item_2/text = "Square"
+popup/item_2/id = 2
+popup/item_3/text = "Saw"
+popup/item_3/id = 3
+popup/item_4/text = "Random"
+popup/item_4/id = 4
+popup/item_5/text = "Chaos"
+popup/item_5/id = 5
+popup/item_6/text = "Drunk Walk"
+popup/item_6/id = 6
+
+[node name="GeneratorCustomUI" type="GridContainer" parent="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator"]
+layout_mode = 2
+columns = 4
+
+[node name="GenerateAutomation" type="Button" parent="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator"]
+layout_mode = 2
+text = "Generate"
 
 [node name="Text Editor" type="VBoxContainer" parent="TabContainer"]
 visible = false
@@ -246,6 +294,8 @@ use_native_dialog = true
 [connection signal="focus_exited" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_focus_exited"]
 [connection signal="text_submitted" from="TabContainer/Visual Editor/EditorData/YEdit" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_y_edit_text_submitted"]
 [connection signal="value_changed" from="TabContainer/Visual Editor/AutomationScrollBar" to="TabContainer/Visual Editor/PanelContainer/AutomationEditor" method="_on_automation_scroll_bar_value_changed"]
+[connection signal="item_selected" from="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator/HBoxContainer/GeneratorType" to="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator" method="_on_generator_type_item_selected"]
+[connection signal="pressed" from="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator/GenerateAutomation" to="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator" method="_on_generate_automation_pressed"]
 [connection signal="item_selected" from="TabContainer/File/VBoxContainer/MIDITrackSelect" to="TabContainer/File" method="_on_midi_track_select_item_selected"]
 [connection signal="pressed" from="TabContainer/File/VBoxContainer/LoadButton" to="TabContainer/File" method="_on_load_button_pressed"]
 [connection signal="pressed" from="TabContainer/File/VBoxContainer/SaveButton" to="TabContainer/File" method="_on_save_button_pressed"]
