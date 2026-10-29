@@ -38,6 +38,19 @@ func create_automation_window(slider_id: int, automation_parent_name: StringName
 	automation_window.automation_values = slider_properties.brk_data
 	
 	get_tree().current_scene.add_child(automation_window)
+	
+	var control_script = get_tree().current_scene
+	var ui_scale = 1.0
+	if control_script.uiscale:
+		ui_scale = control_script.uiscale
+		
+	
+	if automation_window.content_scale_factor < ui_scale:
+		automation_window.size = automation_window.size * ui_scale
+		automation_window.min_size = automation_window.min_size * ui_scale
+		automation_window.content_scale_factor = ui_scale
+	
+	automation_window.add_to_group("popup_windows")
 	automation_window.popup()
 
 func close_windows(nodes: Array[StringName]) -> void:

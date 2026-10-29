@@ -112,9 +112,20 @@ func scale_ui(scale_multiplier: float):
 	#goes through popup_windows group and scales all popups and resizes them
 	for window in get_tree().get_nodes_in_group("popup_windows"):
 		if old_uiscale != 0: #if ui scale = 0 this is the first time this is being adjusted so no need to revert values back to default first
-			window.size = (window.size / old_uiscale) * uiscale
+			if old_uiscale < uiscale:
+				window.size = (window.size / old_uiscale) * uiscale
+				window.min_size = (window.min_size / old_uiscale) * uiscale
+			else:
+				window.min_size = (window.min_size / old_uiscale) * uiscale
+				window.size = (window.size / old_uiscale) * uiscale
 		else:
-			window.size = window.size * uiscale
+			if old_uiscale < uiscale:
+				window.size = window.size * uiscale
+				window.min_size = window.min_size * uiscale
+			else:
+				window.min_size = window.min_size * uiscale
+				window.size = window.size * uiscale
+			
 		window.content_scale_factor = uiscale
 	
 

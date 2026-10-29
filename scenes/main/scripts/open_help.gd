@@ -59,9 +59,12 @@ func show_help_for_node(node_name: String, node_title: String):
 		
 		# Add to the current scene tree to show it
 		get_tree().current_scene.add_child(help_window)
+		
+		#sort out dpi and custom scaling
 		if help_window.content_scale_factor < control_script.uiscale:
 			help_window.size = help_window.size * control_script.uiscale
 			help_window.content_scale_factor = control_script.uiscale
+		help_window.add_to_group("popup_windows")
 		
 		help_window.popup() 
 		
