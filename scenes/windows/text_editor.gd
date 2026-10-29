@@ -3,7 +3,7 @@ extends VBoxContainer
 var min_y: float
 var max_y: float
 
-const minimum_point_spacing = 0.1
+var minimum_point_spacing = 0.1
 
 var automation_points = []
 

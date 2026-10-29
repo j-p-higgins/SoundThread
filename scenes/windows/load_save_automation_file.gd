@@ -2,8 +2,7 @@ extends MarginContainer
 
 signal automation_loaded(loaded_automation_points)
 
-const minimum_point_spacing = 0.1
-
+var minimum_point_spacing = 0.1
 var min_y: float
 var max_y: float
 var exponential: bool

@@ -1,5 +1,7 @@
 extends Window
 
+const minimum_point_spacing = 0.1
+
 var min_x = 0.0 #min max values currently filled with arbitrary values, will be assigned when window is actually made
 var max_x = 100.0
 var min_y: float
@@ -23,20 +25,24 @@ func _ready() -> void:
 	automation_editor.min_y = min_y
 	automation_editor.max_y = max_y
 	automation_editor.exponential = exponential
+	automation_editor.minimum_point_spacing = minimum_point_spacing
 	
 	automation_generator.min_y = min_y
 	automation_generator.max_y = max_y
 	automation_generator.exponential = exponential
 	automation_generator.step_amount = step_amount
+	automation_generator.minimum_point_spacing = minimum_point_spacing
 	automation_generator.generate_automation_points.connect(_on_generate_automation)
 	automation_generator.init()
 	
 	text_editor.min_y = min_y
 	text_editor.max_y = max_y
+	text_editor.minimum_point_spacing = minimum_point_spacing
 	
 	file_editor.min_y = min_y
 	file_editor.max_y = max_y
 	file_editor.exponential = exponential
+	file_editor.minimum_point_spacing = minimum_point_spacing
 	
 	file_editor.automation_loaded.connect(_on_automation_file_loaded)
 	
@@ -104,6 +110,7 @@ func _on_automation_file_loaded(loaded_automation_points: Array, change_tab:= tr
 		tab_container.current_tab = 0
 
 func _on_generate_automation() -> void:
+	automation_editor.delete_selected_points(false)
 	var current_automation_points = automation_editor.automation_points
 	var selection_start = automation_editor.selection_start
 	var selection_end = automation_editor.selection_end
@@ -113,4 +120,4 @@ func _on_generate_automation() -> void:
 	selection_start = clamp(selection_start, 0, 100)
 	selection_end = clamp(selection_end, 0, 100)
 	
-	automation_generator.generate_automation(current_automation_points, selection_start, selection_end)
+	var new_automation_points = automation_generator.generate_automation(current_automation_points, selection_start, selection_end)

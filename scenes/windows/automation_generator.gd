@@ -6,6 +6,7 @@ var min_y: float
 var max_y: float
 var exponential: bool
 var step_amount: float
+var minimum_point_spacing = 0.1
 
 var selected_generator
 var cycle_count = 2
@@ -111,5 +112,46 @@ func _on_range_max_changed(value: float) -> void:
 func _on_generate_automation_pressed() -> void:
 	generate_automation_points.emit()
 
-func generate_automation(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
-	print([current_automation_points, selection_start, selection_end])
+func generate_automation(current_automation_points: Array, selection_start: float, selection_end: float) -> Array:
+	var new_automation_points = []
+	
+	var number_of_points_to_generate = (selection_end - selection_start) / minimum_point_spacing
+	
+	
+	match selected_generator:
+		0:
+			generate_sine(current_automation_points, selection_start, selection_end)
+		1:
+			generate_triangle(current_automation_points, selection_start, selection_end)
+		2:
+			generate_square(current_automation_points, selection_start, selection_end)
+		3:
+			generate_saw(current_automation_points, selection_start, selection_end)
+		4:
+			generate_noise(current_automation_points, selection_start, selection_end)
+		5:
+			generate_chaos(current_automation_points, selection_start, selection_end)
+		6:
+			generate_drunk_walk(current_automation_points, selection_start, selection_end)
+
+	return new_automation_points
+func generate_sine(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
+	return
+
+func generate_triangle(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
+	return
+	
+func generate_square(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
+	return
+
+func generate_saw(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
+	return
+	
+func generate_noise(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
+	return
+	
+func generate_chaos(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
+	return
+	
+func generate_drunk_walk(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
+	return

@@ -27,8 +27,8 @@ var s_curve_icon = load("res://theme/images/s_curve_button.png")
 const max_zoom = 10.0
 const zoom_per_scroll = 0.5
 const point_size = 10
-const minimum_point_spacing = 0.1
 
+var minimum_point_spacing = 0.1
 var zoom_factor = 1.0
 var zoomed_offset = 0.0
 
@@ -266,7 +266,7 @@ func add_remove_point(mouse_position: Vector2) -> void:
 		selected_points.append(automation_points.size() - 1)
 	queue_redraw()
 	
-func delete_selected_points() -> void:
+func delete_selected_points(remove_selection_box = true) -> void:
 	if selected_points.size() > 0:
 		#iterate over selected indexes in reverse order then remove
 		selected_points.sort()
@@ -278,8 +278,9 @@ func delete_selected_points() -> void:
 				automation_points.remove_at(point)
 		
 		selected_points.clear()
-		selection_start = null
-		selection_end = null
+		if remove_selection_box:
+			selection_start = null
+			selection_end = null
 		queue_redraw()
 		
 func select_points(automation_value: Vector2, shift_pressed: bool) -> void:
