@@ -266,13 +266,13 @@ func add_remove_point(mouse_position: Vector2) -> void:
 		selected_points.append(automation_points.size() - 1)
 	queue_redraw()
 	
-func delete_selected_points(remove_selection_box = true) -> void:
+func delete_selected_points(remove_selection_box = true, allow_deletion_of_start_and_end = false) -> void:
 	if selected_points.size() > 0:
 		#iterate over selected indexes in reverse order then remove
 		selected_points.sort()
 		selected_points.reverse()
 		for point in selected_points:
-			if automation_points[point].x == 0 or automation_points[point].x == 100:
+			if (automation_points[point].x == 0 or automation_points[point].x == 100) and !allow_deletion_of_start_and_end:
 				pass
 			else:
 				automation_points.remove_at(point)

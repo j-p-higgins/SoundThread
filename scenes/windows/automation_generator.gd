@@ -116,12 +116,13 @@ func _on_generate_automation_pressed() -> void:
 func generate_automation(selection_start: float, selection_end: float, point_spacing: float) -> Array:
 	var new_automation_points = []
 	
-	var number_of_points_to_generate = (selection_end - selection_start) / point_spacing
+	
 	
 	var current_automation_points = [] #delete
 	
 	match selected_generator:
 		0:
+			var number_of_points_to_generate = ((selection_end - selection_start) / point_spacing) + 1
 			for i in range(number_of_points_to_generate):
 				var step = (i / number_of_points_to_generate) * (2 * PI)
 				var generated_y = generate_sine(step)
@@ -129,6 +130,7 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 				new_automation_points.append(Vector2(new_x, generated_y))
 				
 		1:
+			var number_of_points_to_generate
 			generate_triangle(current_automation_points, selection_start, selection_end)
 		2:
 			generate_square(current_automation_points, selection_start, selection_end)
@@ -140,11 +142,12 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 			generate_chaos(current_automation_points, selection_start, selection_end)
 		6:
 			generate_drunk_walk(current_automation_points, selection_start, selection_end)
-
+	
 	return new_automation_points
 func generate_sine(step: float) -> float:
 	var value = sin((step * cycle_count) + deg_to_rad(starting_phase))
-	value = remap(value, -1, 1, range_min, range_max)
+	value = (value + 1) * 0.5
+	value = normalised_generation_to_value(value)
 	return value
 
 func generate_triangle(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
@@ -165,3 +168,13 @@ func generate_chaos(current_automation_points: Array, selection_start: float, se
 	
 func generate_drunk_walk(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
 	return
+
+
+func normalised_generation_to_value(t: float) -> float:
+	if exponential:
+		var log_min = log(range_min)
+		var log_max = log(range_max)
+		
+		return exp(lerp(log_min, log_max, t))
+	
+	return lerp(range_min, range_max, t)

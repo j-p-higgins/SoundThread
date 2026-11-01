@@ -123,13 +123,16 @@ func _on_generate_automation() -> void:
 	automation_editor.selection_start = selection_start
 	automation_editor.selection_end = selection_end
 	automation_editor.select_points_in_drag_range()
-	automation_editor.delete_selected_points(false)
+	automation_editor.delete_selected_points(false, true)
 	
 	
 	var new_automation_points = automation_generator.generate_automation(selection_start, selection_end, 1 / automation_editor.zoom_factor)
 	
 	automation_editor.automation_points.append_array(new_automation_points)
 	
+	if automation_editor.automation_points[automation_editor.automation_points.size() - 1]. x == 100:
+		var formatted_array = format_array_for_visual_editor(automation_editor.automation_points)
+		automation_editor.automation_points = formatted_array
 	automation_editor.select_points_in_drag_range()
 	
 	if reset_selection:
