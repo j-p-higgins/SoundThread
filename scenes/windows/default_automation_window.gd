@@ -110,14 +110,34 @@ func _on_automation_file_loaded(loaded_automation_points: Array, change_tab:= tr
 		tab_container.current_tab = 0
 
 func _on_generate_automation() -> void:
-	automation_editor.delete_selected_points(false)
-	var current_automation_points = automation_editor.automation_points
 	var selection_start = automation_editor.selection_start
 	var selection_end = automation_editor.selection_end
+	var reset_selection = false
 	if selection_start == null or selection_end == null:
-		selection_start = 0
-		selection_end = 100
+		#nothing selected set the range for generation to be the visable screen region
+		selection_start = automation_editor.zoomed_offset
+		selection_end = (100 / automation_editor.zoom_factor) + automation_editor.zoomed_offset
+		reset_selection = true
 	selection_start = clamp(selection_start, 0, 100)
 	selection_end = clamp(selection_end, 0, 100)
+	automation_editor.selection_start = selection_start
+	automation_editor.selection_end = selection_end
+	automation_editor.select_points_in_drag_range()
+	automation_editor.delete_selected_points(false)
 	
-	var new_automation_points = automation_generator.generate_automation(current_automation_points, selection_start, selection_end)
+	
+	var new_automation_points = automation_generator.generate_automation(selection_start, selection_end, 1 / automation_editor.zoom_factor)
+	
+	automation_editor.automation_points.append_array(new_automation_points)
+	
+	automation_editor.select_points_in_drag_range()
+	
+	if reset_selection:
+		automation_editor.selection_start = null
+		automation_editor.selection_end = null
+	
+	#grab the focus back to the automation editor so added automation can be deleted if wanted
+	automation_editor.grab_focus()
+	
+	automation_editor.queue_redraw()
+	

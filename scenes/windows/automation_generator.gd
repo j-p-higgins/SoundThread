@@ -18,6 +18,7 @@ var range_max
 @onready var generate_button = $GenerateAutomation
 
 var value_slider = preload("res://scenes/Nodes/simpleslider.tscn")
+var rng = RandomNumberGenerator.new()
 
 func init() -> void:
 	_on_generator_type_item_selected(0)
@@ -112,15 +113,21 @@ func _on_range_max_changed(value: float) -> void:
 func _on_generate_automation_pressed() -> void:
 	generate_automation_points.emit()
 
-func generate_automation(current_automation_points: Array, selection_start: float, selection_end: float) -> Array:
+func generate_automation(selection_start: float, selection_end: float, point_spacing: float) -> Array:
 	var new_automation_points = []
 	
-	var number_of_points_to_generate = (selection_end - selection_start) / minimum_point_spacing
+	var number_of_points_to_generate = (selection_end - selection_start) / point_spacing
 	
+	var current_automation_points = [] #delete
 	
 	match selected_generator:
 		0:
-			generate_sine(current_automation_points, selection_start, selection_end)
+			for i in range(number_of_points_to_generate):
+				var step = (i / number_of_points_to_generate) * (2 * PI)
+				var generated_y = generate_sine(step)
+				var new_x = selection_start + (point_spacing * i)
+				new_automation_points.append(Vector2(new_x, generated_y))
+				
 		1:
 			generate_triangle(current_automation_points, selection_start, selection_end)
 		2:
@@ -135,8 +142,10 @@ func generate_automation(current_automation_points: Array, selection_start: floa
 			generate_drunk_walk(current_automation_points, selection_start, selection_end)
 
 	return new_automation_points
-func generate_sine(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
-	return
+func generate_sine(step: float) -> float:
+	var value = sin((step * cycle_count) + deg_to_rad(starting_phase))
+	value = remap(value, -1, 1, range_min, range_max)
+	return value
 
 func generate_triangle(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
 	return
@@ -147,8 +156,9 @@ func generate_square(current_automation_points: Array, selection_start: float, s
 func generate_saw(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
 	return
 	
-func generate_noise(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
-	return
+func generate_noise(current_automation_points: Array, selection_start: float, selection_end: float) -> float:
+	var my_random_number = rng.randf_range(min_y, max_y)
+	return my_random_number
 	
 func generate_chaos(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
 	return
