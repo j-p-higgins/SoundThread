@@ -130,8 +130,26 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 				new_automation_points.append(Vector2(new_x, generated_y))
 				
 		1:
-			var number_of_points_to_generate
-			generate_triangle(current_automation_points, selection_start, selection_end)
+			var number_of_points_to_generate = (cycle_count * 4)
+			var step = (selection_end - selection_start) / number_of_points_to_generate
+			var normalised_phase_offset = starting_phase / 360
+			
+			new_automation_points.append(Vector2(selection_start, generate_triangle(0)))
+			
+			var current_step = selection_start - (((selection_end - selection_start) / cycle_count) * normalised_phase_offset)
+			
+			while current_step <= selection_end:
+				if current_step > selection_start:
+					var normalised_x = (current_step - selection_start) / (selection_end - selection_start)
+					var generated_y = generate_triangle(normalised_x)
+					new_automation_points.append(Vector2(current_step, generated_y))
+				
+				current_step += step
+				
+			if (current_step - step) < selection_end:
+				new_automation_points.append(Vector2(selection_end, generate_triangle(1)))
+
+
 		2:
 			generate_square(current_automation_points, selection_start, selection_end)
 		3:
@@ -150,8 +168,12 @@ func generate_sine(step: float) -> float:
 	value = normalised_generation_to_value(value)
 	return value
 
-func generate_triangle(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
-	return
+func generate_triangle(step: float) -> float:
+	step += 0.25 / cycle_count #offset starting phase so that wavecycle starts at 0 crossing
+	var value = fposmod((step * cycle_count) + (starting_phase / 360), 1.0)
+	value = 1 - (abs(2.0 * value - 1.0))
+	value = normalised_generation_to_value(value)
+	return value
 	
 func generate_square(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
 	return
