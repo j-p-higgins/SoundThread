@@ -121,7 +121,7 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 	var current_automation_points = [] #delete
 	
 	match selected_generator:
-		0:
+		0: #sine
 			var number_of_points_to_generate = ((selection_end - selection_start) / point_spacing) + 1
 			for i in range(number_of_points_to_generate):
 				var step = (i / number_of_points_to_generate) * (2 * PI)
@@ -129,7 +129,7 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 				var new_x = selection_start + (point_spacing * i)
 				new_automation_points.append(Vector2(new_x, generated_y))
 				
-		1:
+		1: #triangle
 			var number_of_points_to_generate = (cycle_count * 4)
 			var step = (selection_end - selection_start) / number_of_points_to_generate
 			var normalised_phase_offset = starting_phase / 360
@@ -150,15 +150,46 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 				new_automation_points.append(Vector2(selection_end, generate_triangle(1)))
 
 
-		2:
+		2: #square
 			generate_square(current_automation_points, selection_start, selection_end)
-		3:
-			generate_saw(current_automation_points, selection_start, selection_end)
-		4:
+		3: #saw
+			#var number_of_points_to_generate = cycle_count * 2
+			var step = (selection_end - selection_start) / cycle_count
+			var normalised_phase_offset = starting_phase / 360
+			
+			new_automation_points.append(Vector2(selection_start, normalised_generation_to_value((normalised_phase_offset * -1) + 1)))
+			
+			var current_step = selection_start - (step * normalised_phase_offset)
+			
+			while current_step <= selection_end:
+				var generated_y
+				var generated_x
+				if current_step > selection_start:
+					generated_y = normalised_generation_to_value(1)
+					generated_x = current_step
+					new_automation_points.append(Vector2(generated_x, generated_y))
+					if current_step + step <= selection_end:
+						generated_y = normalised_generation_to_value(0)
+						generated_x = current_step + step - point_spacing
+						new_automation_points.append(Vector2(generated_x, generated_y))
+				else:
+					if current_step + step <= selection_end:
+						generated_y = normalised_generation_to_value(0)
+						generated_x = current_step + step - point_spacing
+						new_automation_points.append(Vector2(generated_x, generated_y))
+					
+				current_step += step
+					
+			if (current_step - step) < selection_end:
+				var final_point_normalised_phase = fmod((current_step - selection_end) / step, 1)
+				var generated_y = normalised_generation_to_value(final_point_normalised_phase)
+				print(generated_y)
+				new_automation_points.append(Vector2(selection_end, generated_y))
+		4: #noise
 			generate_noise(current_automation_points, selection_start, selection_end)
-		5:
+		5: #chaos
 			generate_chaos(current_automation_points, selection_start, selection_end)
-		6:
+		6: #drunk walk
 			generate_drunk_walk(current_automation_points, selection_start, selection_end)
 	
 	return new_automation_points
@@ -169,7 +200,7 @@ func generate_sine(step: float) -> float:
 	return value
 
 func generate_triangle(step: float) -> float:
-	step += 0.25 / cycle_count #offset starting phase so that wavecycle starts at 0 crossing
+	step += 0.25 / cycle_count #offset starting phase so that wavecycle starts at "0" crossing
 	var value = fposmod((step * cycle_count) + (starting_phase / 360), 1.0)
 	value = 1 - (abs(2.0 * value - 1.0))
 	value = normalised_generation_to_value(value)
@@ -178,8 +209,6 @@ func generate_triangle(step: float) -> float:
 func generate_square(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
 	return
 
-func generate_saw(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
-	return
 	
 func generate_noise(current_automation_points: Array, selection_start: float, selection_end: float) -> float:
 	var my_random_number = rng.randf_range(min_y, max_y)
