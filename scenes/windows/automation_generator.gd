@@ -28,8 +28,8 @@ func init() -> void:
 func _on_generator_type_item_selected(index: int) -> void:
 			
 	match index:
-		0, 1, 2, 3:
-			if selected_generator not in [0, 1, 2, 3]:
+		0, 1, 2, 3, 4:
+			if selected_generator not in [0, 1, 2, 3, 4]:
 				for child in ui_container.get_children():
 					child.queue_free()
 					
@@ -78,18 +78,18 @@ func _on_generator_type_item_selected(index: int) -> void:
 				for ui_element in [cycles_label, cycles_slider, phase_label, phase_slider, min_label, min_slider, max_label, max_slider]:
 					ui_container.add_child(ui_element)
 					
-		4:
-			if selected_generator != 4:
-				for child in ui_container.get_children():
-					child.queue_free()
-			
 		5:
 			if selected_generator != 5:
 				for child in ui_container.get_children():
 					child.queue_free()
-					
+			
 		6:
 			if selected_generator != 6:
+				for child in ui_container.get_children():
+					child.queue_free()
+					
+		7:
+			if selected_generator != 7:
 				for child in ui_container.get_children():
 					child.queue_free()
 					
@@ -152,29 +152,38 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 
 		2: #square
 			generate_square(current_automation_points, selection_start, selection_end)
-		3: #saw
-			#var number_of_points_to_generate = cycle_count * 2
+		3, 4: #saw and ramp
 			var step = (selection_end - selection_start) / cycle_count
 			var normalised_phase_offset = starting_phase / 360
 			
-			new_automation_points.append(Vector2(selection_start, normalised_generation_to_value((normalised_phase_offset * -1) + 1)))
+			var starting_value = normalised_phase_offset
+			if selected_generator == 3:
+				starting_value = (starting_value * -1) + 1
+			new_automation_points.append(Vector2(selection_start, normalised_generation_to_value(starting_value)))
 			
 			var current_step = selection_start - (step * normalised_phase_offset)
+			
+			var phase_0 = 1
+			var phase_360 = 0
+			if selected_generator == 4:
+				phase_0 = 0
+				phase_360 = 1
+			
 			
 			while current_step <= selection_end:
 				var generated_y
 				var generated_x
 				if current_step > selection_start:
-					generated_y = normalised_generation_to_value(1)
+					generated_y = normalised_generation_to_value(phase_0)
 					generated_x = current_step
 					new_automation_points.append(Vector2(generated_x, generated_y))
 					if current_step + step <= selection_end:
-						generated_y = normalised_generation_to_value(0)
+						generated_y = normalised_generation_to_value(phase_360)
 						generated_x = current_step + step - point_spacing
 						new_automation_points.append(Vector2(generated_x, generated_y))
 				else:
 					if current_step + step <= selection_end:
-						generated_y = normalised_generation_to_value(0)
+						generated_y = normalised_generation_to_value(phase_360)
 						generated_x = current_step + step - point_spacing
 						new_automation_points.append(Vector2(generated_x, generated_y))
 					
@@ -182,14 +191,15 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 					
 			if (current_step - step) < selection_end:
 				var final_point_normalised_phase = fmod((current_step - selection_end) / step, 1)
+				if selected_generator == 4:
+					final_point_normalised_phase = (final_point_normalised_phase * -1) + 1
 				var generated_y = normalised_generation_to_value(final_point_normalised_phase)
-				print(generated_y)
 				new_automation_points.append(Vector2(selection_end, generated_y))
-		4: #noise
+		5: #noise
 			generate_noise(current_automation_points, selection_start, selection_end)
-		5: #chaos
+		6: #chaos
 			generate_chaos(current_automation_points, selection_start, selection_end)
-		6: #drunk walk
+		7: #drunk walk
 			generate_drunk_walk(current_automation_points, selection_start, selection_end)
 	
 	return new_automation_points

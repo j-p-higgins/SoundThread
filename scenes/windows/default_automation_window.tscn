@@ -179,7 +179,7 @@ text = "Automation Generator: "
 [node name="GeneratorType" type="OptionButton" parent="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator/HBoxContainer"]
 layout_mode = 2
 selected = 0
-item_count = 7
+item_count = 8
 popup/item_0/text = "Sine"
 popup/item_0/id = 0
 popup/item_1/text = "Triangle"
@@ -188,12 +188,14 @@ popup/item_2/text = "Square"
 popup/item_2/id = 2
 popup/item_3/text = "Saw"
 popup/item_3/id = 3
-popup/item_4/text = "Random"
+popup/item_4/text = "Ramp"
 popup/item_4/id = 4
-popup/item_5/text = "Chaos"
+popup/item_5/text = "Random"
 popup/item_5/id = 5
-popup/item_6/text = "Drunk Walk"
+popup/item_6/text = "Chaos"
 popup/item_6/id = 6
+popup/item_7/text = "Drunk Walk"
+popup/item_7/id = 7
 
 [node name="GeneratorCustomUI" type="GridContainer" parent="TabContainer/Visual Editor/MarginContainer2/AutomationGenerator"]
 layout_mode = 2
