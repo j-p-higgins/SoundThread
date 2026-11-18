@@ -14,6 +14,7 @@ var starting_phase = 0
 var range_min
 var range_max
 var pulse_width = 50.0
+var chaos_speed = 10
 
 @onready var ui_container = $GeneratorCustomUI
 @onready var generate_button = $GenerateAutomation
@@ -111,6 +112,40 @@ func _on_generator_type_item_selected(index: int) -> void:
 			if selected_generator != 6:
 				for child in ui_container.get_children():
 					child.queue_free()
+				var min_label = Label.new()
+				var min_slider = value_slider.instantiate()
+				var max_label = Label.new()
+				var max_slider = value_slider.instantiate()
+				var rate_label = Label.new()
+				var rate_slider = value_slider.instantiate()
+				
+				min_label.text = "Minimum Value:"
+				max_label.text = "Maxium Value:"
+				rate_label.text = "Chaos Rate:"
+				
+				min_slider.min_value = min_y
+				min_slider.max_value = max_y
+				min_slider.exponential = exponential
+				min_slider.step_amount = step_amount
+				min_slider.init_value = min_y
+				min_slider.value_changed.connect(_on_range_min_changed)
+				
+				max_slider.min_value = min_y
+				max_slider.max_value = max_y
+				max_slider.exponential = exponential
+				max_slider.step_amount = step_amount
+				max_slider.init_value = max_y
+				max_slider.value_changed.connect(_on_range_max_changed)
+				
+				rate_slider.min_value = 1
+				rate_slider.max_value = 100
+				rate_slider.exponential = true
+				rate_slider.step_amount = 1.0
+				rate_slider.init_value = 10.0
+				rate_slider.value_changed.connect(_on_chaos_speed_changed)
+				
+				for ui_element in [min_label, min_slider, max_label, max_slider, rate_label, rate_slider]:
+					ui_container.add_child(ui_element)
 					
 		7:
 			if selected_generator != 7:
@@ -135,6 +170,9 @@ func _on_range_max_changed(value: float) -> void:
 
 func _on_pw_changed(value: float) -> void:
 	pulse_width = value
+	
+func _on_chaos_speed_changed(value: float) -> void:
+	chaos_speed = value
 
 
 
@@ -143,8 +181,6 @@ func _on_generate_automation_pressed() -> void:
 
 func generate_automation(selection_start: float, selection_end: float, point_spacing: float) -> Array:
 	var new_automation_points = []
-	
-	
 	
 	var current_automation_points = [] #delete
 	
@@ -259,7 +295,27 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 		5: #noise
 			generate_noise(current_automation_points, selection_start, selection_end)
 		6: #chaos
-			generate_chaos(current_automation_points, selection_start, selection_end)
+			var x = rng.randf_range(-10, 10)
+			var y = rng.randf_range(-15, 15)
+			var z = rng.randf_range(10, 40)
+
+			var number_of_points_to_generate = ((selection_end - selection_start) / point_spacing) + 1
+			
+			for i in range(number_of_points_to_generate):
+				var generated_chaos = generate_chaos(x, y, z)
+				x = generated_chaos[0]
+				y = generated_chaos[1]
+				z = generated_chaos[2]
+				#scale x value, it should range between -20 and 20
+				var normalised_y = remap(clamp(x, -20, 20), -20, 20, 0, 1)
+				var generated_y = normalised_generation_to_value(normalised_y)
+				var generated_x = selection_start + (point_spacing * i)
+				new_automation_points.append(Vector2(generated_x, generated_y))
+				
+				
+				
+				
+				
 		7: #drunk walk
 			generate_drunk_walk(current_automation_points, selection_start, selection_end)
 	
@@ -285,8 +341,17 @@ func generate_noise(current_automation_points: Array, selection_start: float, se
 	var my_random_number = rng.randf_range(min_y, max_y)
 	return my_random_number
 	
-func generate_chaos(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
-	return
+func generate_chaos(x: float, y: float, z: float) -> Array:
+	for i in range(chaos_speed):
+		var dx = (10 * (y - x)) * 0.005
+		var dy = ((x * (28 - z)) - y) * 0.005
+		var dz = ((x * y) - (z * 2.67)) * 0.005
+		
+		x += dx
+		y += dy
+		z += dz
+		
+	return [x, y, z]
 	
 func generate_drunk_walk(current_automation_points: Array, selection_start: float, selection_end: float) -> void:
 	return

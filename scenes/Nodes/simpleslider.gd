@@ -17,6 +17,7 @@ func _ready() -> void:
 	slider.exp_edit = exponential
 	slider.step = step_amount
 	slider.value = init_value
+	value_box.text = str(init_value)
 
 func _on_h_slider_value_changed(value: float) -> void:
 	value_box.text = str(value)
