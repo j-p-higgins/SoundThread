@@ -45,3 +45,9 @@ func _on_line_edit_focus_exited() -> void:
 
 func _on_line_edit_text_submitted(new_text: String) -> void:
 	_on_line_edit_focus_exited()
+
+
+func _on_h_slider_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
+		slider.value = init_value
+		accept_event()

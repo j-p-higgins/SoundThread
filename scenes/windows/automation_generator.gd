@@ -13,6 +13,7 @@ var cycle_count = 2
 var starting_phase = 0
 var range_min
 var range_max
+var pulse_width = 50.0
 
 @onready var ui_container = $GeneratorCustomUI
 @onready var generate_button = $GenerateAutomation
@@ -41,11 +42,14 @@ func _on_generator_type_item_selected(index: int) -> void:
 				var min_slider = value_slider.instantiate()
 				var max_label = Label.new()
 				var max_slider = value_slider.instantiate()
+				var pw_label = Label.new()
+				var pw_slider = value_slider.instantiate()
 				
 				cycles_label.text = "Cycle Count:"
 				phase_label.text = "Starting Phase:"
 				min_label.text = "Minimum Value:"
 				max_label.text = "Maxium Value:"
+				pw_label.text = "Pulse Width:"
 				
 				cycles_slider.min_value = 0.1
 				cycles_slider.max_value = 20
@@ -55,7 +59,7 @@ func _on_generator_type_item_selected(index: int) -> void:
 				cycles_slider.value_changed.connect(_on_cycle_count_changed)
 				
 				phase_slider.min_value = 0
-				phase_slider.max_value = 360
+				phase_slider.max_value = 359
 				phase_slider.exponential = false
 				phase_slider.step_amount = 1.0
 				phase_slider.init_value = 0
@@ -75,9 +79,29 @@ func _on_generator_type_item_selected(index: int) -> void:
 				max_slider.init_value = max_y
 				max_slider.value_changed.connect(_on_range_max_changed)
 				
-				for ui_element in [cycles_label, cycles_slider, phase_label, phase_slider, min_label, min_slider, max_label, max_slider]:
+				pw_slider.min_value = 5
+				pw_slider.max_value = 95
+				pw_slider.exponential = false
+				pw_slider.step_amount = 0.1
+				pw_slider.init_value = 50
+				pw_slider.value_changed.connect(_on_pw_changed)
+				
+				for ui_element in [cycles_label, cycles_slider, phase_label, phase_slider, min_label, min_slider, max_label, max_slider, pw_label, pw_slider]:
+					if index != 2:
+						pw_label.hide()
+						pw_slider.hide()
 					ui_container.add_child(ui_element)
 					
+			elif index in [0, 1, 3, 4]:
+				#a horrible fix to hide the pulse width slider if not needed
+				var i = 0
+				for child in ui_container.get_children():
+					if i > 7:
+						child.hide()
+					i += 1
+			else:
+				for child in ui_container.get_children():
+					child.show()
 		5:
 			if selected_generator != 5:
 				for child in ui_container.get_children():
@@ -108,6 +132,10 @@ func _on_range_min_changed(value: float) -> void:
 	
 func _on_range_max_changed(value: float) -> void:
 	range_max = value
+
+func _on_pw_changed(value: float) -> void:
+	pulse_width = value
+
 
 
 func _on_generate_automation_pressed() -> void:
@@ -151,7 +179,40 @@ func generate_automation(selection_start: float, selection_end: float, point_spa
 
 
 		2: #square
-			generate_square(current_automation_points, selection_start, selection_end)
+			var step = (selection_end - selection_start) / cycle_count
+			var normalised_phase_offset = starting_phase / 360
+			var normalised_pulse_width = pulse_width / 100
+			
+			var current_step = selection_start - (step * normalised_phase_offset)
+			
+			if current_step <= selection_start:
+				var generated_y
+				if normalised_phase_offset <= normalised_pulse_width:
+					generated_y = 1
+				else:
+					generated_y = 0
+				new_automation_points.append(Vector2(selection_start, normalised_generation_to_value(generated_y)))
+			
+			while current_step <= selection_end:
+				var generated_x = current_step
+				if generated_x > selection_start and generated_x <= selection_end:
+					new_automation_points.append(Vector2(generated_x, normalised_generation_to_value(1)))
+				generated_x = current_step + (step * normalised_pulse_width)
+				if generated_x > selection_start and generated_x <= selection_end:
+					new_automation_points.append(Vector2(generated_x, normalised_generation_to_value(1)))
+				generated_x = current_step + (step * normalised_pulse_width) + minimum_point_spacing
+				if generated_x > selection_start and generated_x <= selection_end:
+					new_automation_points.append(Vector2(generated_x, normalised_generation_to_value(0)))
+				generated_x = current_step + step - minimum_point_spacing
+				if generated_x > selection_start and generated_x <= selection_end:
+					new_automation_points.append(Vector2(generated_x, normalised_generation_to_value(0)))
+				current_step += step
+				
+			if (current_step - step) < selection_end:
+				var last_value = new_automation_points[new_automation_points.size() - 1].y
+				new_automation_points.append(Vector2(100.0, last_value))
+			
+				
 		3, 4: #saw and ramp
 			var step = (selection_end - selection_start) / cycle_count
 			var normalised_phase_offset = starting_phase / 360

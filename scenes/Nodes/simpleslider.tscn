@@ -21,6 +21,7 @@ max_length = 5
 flat = true
 select_all_on_focus = true
 
+[connection signal="gui_input" from="HSlider" to="." method="_on_h_slider_gui_input"]
 [connection signal="value_changed" from="HSlider" to="." method="_on_h_slider_value_changed"]
 [connection signal="focus_exited" from="LineEdit" to="." method="_on_line_edit_focus_exited"]
 [connection signal="text_submitted" from="LineEdit" to="." method="_on_line_edit_text_submitted"]
